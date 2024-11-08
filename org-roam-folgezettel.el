@@ -23,6 +23,8 @@
 ;; Folgezettel interface for Org-roam.
 
 ;;; Code:
+(require 'vtable)
+(require 'org-roam-db)
 
 ;;; Variables
 ;;;; Options
@@ -33,8 +35,47 @@
 ;;;; Internal
 
 ;;; Functions
+(defun org-roam-folgezettel-list--objects ()
+  "Get objects for vtable.
+Returns a list of lists, one for every org-roam node.  Each list
+contains the cached information for that node."
+  (org-roam-db-query [ :select [id
+                                file
+                                title
+                                level
+                                pos
+                                olp
+                                properties
+                                (funcall group-concat tag
+                                         (emacsql-escape-raw \, ))]
+                       :as tags
+                       :from nodes
+                       :left-join tags
+                       :on (= id node_id)
+                       :group :by id]))
+
+(defun org-roam-folgezettel-list--getter (object column vtable)
+  "Getter for vtable objects.
+OBJECT is an object of the type returned by
+`org-roam-folgezettel-list--objects'.  COLUMN is the index of the column
+the returned data is for.  VTABLE is the vtable this getter is for."
+  (pcase (vtable-column vtable column)
+    ("Title"
+     (nth 2 object))
+    ("Tags"
+     (cdr (assoc "ALLTAGS" (nth 6 object) #'string-equal)))))
 
 ;;; Commands
+;;;###autoload
+(defun org-roam-folgezettel-list ()
+  "List org-roam nodes."
+  (interactive)
+  (make-vtable
+   :columns '((:name "Title" :align left)
+              (:name "Tags" :align right))
+   :objects-function #'org-roam-folgezettel-list--objects
+   :getter #'org-roam-folgezettel-list--getter
+   :separator-width 5))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
