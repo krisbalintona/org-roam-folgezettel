@@ -45,6 +45,10 @@ node should be excluded from the listing, and nil otherwise."
 ;;;; Faces
 
 ;;;; Internal
+(defvar org-roam-folgezettel-filter-indicator ""
+  "Mode line indicator for current filter.
+Inspired by tablist.el's filter indicator.  Is added to
+`mode-line-misc-info'.")
 
 ;;; Functions
 ;;;; Index numbering sorter
@@ -252,15 +256,14 @@ Prompts for a new index for the node associated with OBJECT."
           (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
                   (seq-filter #'file-directory-p
                               (directory-files org-roam-directory t "^[^.]" t))))
-         (subdir (expand-file-name
-                  (completing-read "Subdirectory: " subdirs)
-                  org-roam-directory)))
+         (subdir (completing-read "Subdirectory: " subdirs)))
     (setq-local org-roam-folgezettel-filter-function
                 `(lambda (object)
                    ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
-                   (not (string-prefix-p ,subdir
+                   (not (string-prefix-p ,(expand-file-name subdir org-roam-directory)
                                          (expand-file-name
-                                          (org-roam-folgezettel-list--retrieve-file object))))))
+                                          (org-roam-folgezettel-list--retrieve-file object)))))
+                org-roam-folgezettel-filter-indicator (format "%s" subdir))
     (message "Filtered nodes to the %s subdirectory" subdir)
     (vtable-revert-command)))
 
@@ -277,7 +280,12 @@ Prompts for a new index for the node associated with OBJECT."
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
   :interactive nil
-  :group 'org-roam-folgezettel)
+  :group 'org-roam-folgezettel
+  :after-hook (set (make-local-variable 'mode-line-misc-info)
+                   (append
+                    (list
+                     (list 'org-roam-folgezettel-filter-function
+                           '(:eval (format " [%s]" org-roam-folgezettel-filter-indicator)))))))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
