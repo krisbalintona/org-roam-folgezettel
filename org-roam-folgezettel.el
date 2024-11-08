@@ -39,20 +39,18 @@
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (org-roam-db-query [ :select [id
-                                file
-                                title
-                                level
-                                pos
-                                olp
-                                properties
-                                (funcall group-concat tag
-                                         (emacsql-escape-raw \, ))]
-                       :as tags
-                       :from nodes
-                       :left-join tags
-                       :on (= id node_id)
-                       :group :by id]))
+  (org-roam-db-query [ :select [nodes:id
+                                nodes:file
+                                nodes:level
+                                nodes:pos
+                                nodes:todo
+                                nodes:priority
+                                nodes:scheduled
+                                nodes:deadline
+                                nodes:title
+                                nodes:properties
+                                nodes:olp]
+                       :from nodes]))
 
 (defun org-roam-folgezettel-list--getter (object column vtable)
   "Getter for vtable objects.
@@ -60,10 +58,13 @@ OBJECT is an object of the type returned by
 `org-roam-folgezettel-list--objects'.  COLUMN is the index of the column
 the returned data is for.  VTABLE is the vtable this getter is for."
   (pcase (vtable-column vtable column)
+    ("Index"
+     (or (cdr (assoc "ROAM_PLACE" (nth 9 object) #'string-equal))
+         ""))
     ("Title"
-     (or (nth 2 object) "(No Title)"))
+     (or (nth 8 object) "(No Title)"))
     ("Tags"
-     (or (cdr (assoc "ALLTAGS" (nth 6 object) #'string-equal)) ""))))
+     (or (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)) ""))))
 
 ;;; Commands
 ;;;###autoload
@@ -72,7 +73,8 @@ the returned data is for.  VTABLE is the vtable this getter is for."
   (interactive)
   (let ((inhibit-read-only t))
     (make-vtable
-     :columns '((:name "Title" :align left)
+     :columns '((:name "Index" :align right)
+                (:name "Title" :align left)
                 (:name "Tags" :align right))
      :objects-function #'org-roam-folgezettel-list--objects
      :getter #'org-roam-folgezettel-list--getter
