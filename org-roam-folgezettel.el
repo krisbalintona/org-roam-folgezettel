@@ -71,15 +71,19 @@ the returned data is for.  VTABLE is the vtable this getter is for."
 (defun org-roam-folgezettel-list ()
   "List org-roam nodes."
   (interactive)
-  (let ((inhibit-read-only t))
-    (make-vtable
-     :columns '((:name "Index" :align right)
-                (:name "Title" :align left)
-                (:name "Tags" :align right))
-     :objects-function #'org-roam-folgezettel-list--objects
-     :getter #'org-roam-folgezettel-list--getter
-     :separator-width 2))
-  (setq-local buffer-read-only t))
+  (let ((buf (get-buffer-create "*Node Listing*")))
+    (with-current-buffer buf
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (make-vtable
+         :columns '((:name "Index" :align right)
+                    (:name "Title" :align left)
+                    (:name "Tags" :align right))
+         :objects-function #'org-roam-folgezettel-list--objects
+         :getter #'org-roam-folgezettel-list--getter
+         :separator-width 2))
+      (setq-local buffer-read-only t))
+    (display-buffer buf)))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
