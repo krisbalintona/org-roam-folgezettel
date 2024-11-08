@@ -45,13 +45,17 @@ useful operation for later index numbering operations for sorting; see
 `org-roam-folgezettel--index-split' and
 `org-roam-folgezettel--index-padded-parts'.
 
+A special case is when INDEX is an empty string.  Since we want nodes
+without indices to be positioned above nodes with an index, we assign
+these nodes an index of \"0\", which sorts them above every other index.
+
 This function is a modified version from Protesilaos Stavrou, found in
 https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
   (replace-regexp-in-string
    (rx (group (+? alpha)) (group digit)) "\\1.\\2"
    (replace-regexp-in-string
     (rx (group (+? digit)) (group alpha)) "\\1.\\2"
-    (or index ""))))
+    (or index "0"))))
 
 (defun org-roam-folgezettel--index-split (index)
   "Split INDEX into Luhmann-style parts.
