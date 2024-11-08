@@ -78,7 +78,7 @@ the returned data is for.  VTABLE is the vtable this getter is for."
                 (:name "Tags" :align right))
      :objects-function #'org-roam-folgezettel-list--objects
      :getter #'org-roam-folgezettel-list--getter
-     :separator-width 5))
+     :separator-width 2))
   (setq-local buffer-read-only t))
 
 ;;; Provide
