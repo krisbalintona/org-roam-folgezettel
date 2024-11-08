@@ -234,6 +234,8 @@ Prompts for a new index for the node associated with OBJECT."
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
+  "p" #'previous-line
+  "n" #'next-line
   "q" #'quit-window
   "RET" #'org-roam-folgezettel-open-node
   "i" #'org-roam-folgezettel-edit-index)
