@@ -26,6 +26,9 @@
 
 ;;; Variables
 ;;;; Options
+(defgroup org-roam-folgezettel ()
+  "Interfaces for org-roam nodes."
+  :group 'files)
 
 ;;;; Internal
 
