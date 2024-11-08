@@ -180,16 +180,6 @@ the returned data is for.  VTABLE is the vtable this getter is for."
     ("Tags"
      (or (org-roam-folgezettel-list--retrieve-tags object) ""))))
 
-;;; Major mode and keymap
-(defvar-keymap org-roam-folgezettel-mode-map
-  :doc "Mode map for `org-roam-folgezettel-mode'."
-  "q" #'quit-window)
-
-(define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
-  "Major mode for listing org-roam nodes."
-  :interactive nil
-  :group 'org-roam-folgezettel)
-
 ;;; Commands
 ;;;###autoload
 (defun org-roam-folgezettel-list ()
@@ -215,6 +205,43 @@ the returned data is for.  VTABLE is the vtable this getter is for."
          :separator-width 2))
       (setq-local buffer-read-only t))
     (display-buffer buf)))
+
+(defun org-roam-folgezettel-open-node (object)
+  "Open the node at point.
+Opens the node associated with OBJECT."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (find-file (org-roam-folgezettel-list--retrieve-file object)))
+
+(defun org-roam-folgezettel-edit-index (object)
+  "Edit the index of the node at point.
+Prompts for a new index for the node associated with OBJECT."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (let* ((file (org-roam-folgezettel-list--retrieve-file object))
+         (current-index (org-roam-folgezettel-list--retrieve-index object))
+         (new-index (read-string "New index numbering: " current-index))
+         (node-point (org-roam-folgezettel-list--retrieve-point object))
+         (save-silently t))
+    (unless (string= current-index new-index)
+      (with-current-buffer (find-file-noselect file)
+        (save-excursion
+          (goto-char node-point)
+          (org-roam-node-at-point 'assert)
+          (org-set-property "ROAM_PLACE" new-index))
+        (save-buffer)
+        (org-roam-db-update-file file))
+      (vtable-update-object (vtable-current-table) object))))
+
+;;; Major mode and keymap
+(defvar-keymap org-roam-folgezettel-mode-map
+  :doc "Mode map for `org-roam-folgezettel-mode'."
+  "q" #'quit-window
+  "RET" #'org-roam-folgezettel-open-node
+  "i" #'org-roam-folgezettel-edit-index)
+
+(define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
+  "Major mode for listing org-roam nodes."
+  :interactive nil
+  :group 'org-roam-folgezettel)
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
