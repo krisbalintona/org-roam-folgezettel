@@ -35,22 +35,74 @@
 ;;;; Internal
 
 ;;; Functions
+;;;; Index numbering sorter
+(defun org-roam-folgezettel--index-normalize (index)
+  "Normalized INDEX into a signature whose parts are separated by \".\".
+
+This means that every transition from number to letter or letter to
+number warrants the insertion of a \".\" to delimit it.  This is a
+useful operation for later index numbering operations for sorting; see
+`org-roam-folgezettel--index-split' and
+`org-roam-folgezettel--index-padded-parts'.
+
+This function is a modified version from Protesilaos Stavrou, found in
+https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
+  (replace-regexp-in-string
+   (rx (group (+? alpha)) (group digit)) "\\1.\\2"
+   (replace-regexp-in-string
+    (rx (group (+? digit)) (group alpha)) "\\1.\\2"
+    (or index ""))))
+
+(defun org-roam-folgezettel--index-split (index)
+  "Split INDEX into Luhmann-style parts.
+Returns a list of strings wherein each string is a part as described by
+the docstring of `org-roam-folgezettel--signature-normalize'.
+
+This is a useful operation for later index numbering operations for
+sorting; see ``org-roam-folgezettel--index-padded-parts' and
+`org-roam-folgezettel--index-lessp'."
+  (string-split (org-roam-folgezettel--index-normalize index) "\\." t))
+
+(defun org-roam-folgezettel--index-padded-parts (index)
+  "Add padded spaces for all parts of INDEX.
+For example, \"3.1b23d\" becomes \"    3.    1.    b.   23.    d\".
+This is useful for operations such as
+`org-roam-folgezettel--index-lessp' which compares strings.
+
+This function is a modified version from Protesilaos Stavrou, found in
+https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
+  (combine-and-quote-strings
+   (mapcar (lambda (x)
+             (string-pad x 5 32 t))
+           (org-roam-folgezettel--index-split index))
+   "."))
+
+(defun org-roam-folgezettel--index-lessp (index1 index2)
+  "Compare two strings based on my index numbering sorting rules.
+Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
+`string<' to compare strings."
+  (string< (org-roam-folgezettel--index-padded-parts index1)
+           (org-roam-folgezettel--index-padded-parts index2)))
+
+;;;; Vtable
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (org-roam-db-query [ :select [nodes:id
-                                nodes:file
-                                nodes:level
-                                nodes:pos
-                                nodes:todo
-                                nodes:priority
-                                nodes:scheduled
-                                nodes:deadline
-                                nodes:title
-                                nodes:properties
-                                nodes:olp]
-                       :from nodes]))
+  (let ((nodes (org-roam-db-query [ :select [nodes:id
+                                             nodes:file
+                                             nodes:level
+                                             nodes:pos
+                                             nodes:todo
+                                             nodes:priority
+                                             nodes:scheduled
+                                             nodes:deadline
+                                             nodes:title
+                                             nodes:properties
+                                             nodes:olp]
+                                    :from nodes])))
+    (cl-sort nodes #'org-roam-folgezettel--index-lessp
+             :key (lambda (node) (cdr (assoc "ROAM_PLACE" (nth 9 node) #'string-equal))))))
 
 (defun org-roam-folgezettel-list--getter (object column vtable)
   "Getter for vtable objects.
@@ -87,7 +139,7 @@ the returned data is for.  VTABLE is the vtable this getter is for."
         (erase-buffer)
         (org-roam-folgezettel-mode)
         (make-vtable
-         :columns '((:name "Index" :align right)
+         :columns '((:name "Index" :align left)
                     (:name "Title" :align left)
                     (:name "Tags" :align right))
          :objects-function #'org-roam-folgezettel-list--objects
