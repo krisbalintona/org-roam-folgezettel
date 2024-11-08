@@ -85,6 +85,24 @@ Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
            (org-roam-folgezettel--index-padded-parts index2)))
 
 ;;;; Vtable
+(defun org-roam-folgezettel-list--retrieve-index (object)
+  "Retrieve the index string of OBJECT.
+Object is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (cdr (assoc "ROAM_PLACE" (nth 9 object) #'string-equal)))
+
+(defun org-roam-folgezettel-list--retrieve-title (object)
+  "Retrieve the title string of OBJECT.
+Object is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (nth 8 object))
+
+(defun org-roam-folgezettel-list--retrieve-tags (object)
+  "Retrieve the tags of OBJECT.
+Object is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)))
+
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
@@ -102,7 +120,7 @@ contains the cached information for that node."
                                              nodes:olp]
                                     :from nodes])))
     (cl-sort nodes #'org-roam-folgezettel--index-lessp
-             :key (lambda (node) (cdr (assoc "ROAM_PLACE" (nth 9 node) #'string-equal))))))
+             :key #'org-roam-folgezettel-list--retrieve-index)))
 
 (defun org-roam-folgezettel-list--getter (object column vtable)
   "Getter for vtable objects.
@@ -111,12 +129,11 @@ OBJECT is an object of the type returned by
 the returned data is for.  VTABLE is the vtable this getter is for."
   (pcase (vtable-column vtable column)
     ("Index"
-     (or (cdr (assoc "ROAM_PLACE" (nth 9 object) #'string-equal))
-         ""))
+     (or (org-roam-folgezettel-list--retrieve-index object) ""))
     ("Title"
-     (or (nth 8 object) "(No Title)"))
+     (or (org-roam-folgezettel-list--retrieve-title object) "(No Title)"))
     ("Tags"
-     (or (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)) ""))))
+     (or (org-roam-folgezettel-list--retrieve-tags object) ""))))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
