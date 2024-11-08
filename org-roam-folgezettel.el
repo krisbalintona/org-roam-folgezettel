@@ -200,21 +200,21 @@ the returned data is for.  VTABLE is the vtable this getter is for."
   (let ((buf (get-buffer-create "*Node Listing*")))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
-        (erase-buffer)
-        (org-roam-folgezettel-mode)
-        (make-vtable
-         :columns '(( :name "Index"
-                      :align left
-                      :formatter org-roam-folgezettel--index-formatter)
-                    ( :name "Title"
-                      :align left
-                      :formatter org-roam-folgezettel--title-formatter)
-                    ( :name "Tags"
-                      :align right
-                      :formatter org-roam-folgezettel--tags-formatter))
-         :objects-function #'org-roam-folgezettel-list--objects
-         :getter #'org-roam-folgezettel-list--getter
-         :separator-width 2))
+        (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
+          (org-roam-folgezettel-mode)
+          (make-vtable
+           :columns '(( :name "Index"
+                        :align left
+                        :formatter org-roam-folgezettel--index-formatter)
+                      ( :name "Title"
+                        :align left
+                        :formatter org-roam-folgezettel--title-formatter)
+                      ( :name "Tags"
+                        :align right
+                        :formatter org-roam-folgezettel--tags-formatter))
+           :objects-function #'org-roam-folgezettel-list--objects
+           :getter #'org-roam-folgezettel-list--getter
+           :separator-width 2)))
       (setq-local buffer-read-only t))
     (display-buffer buf)))
 
@@ -241,7 +241,7 @@ Prompts for a new index for the node associated with OBJECT."
           (org-set-property "ROAM_PLACE" new-index))
         (if (y-or-n-p (format "Save buffer %s? " file))
             (save-buffer)
-          (user-error "Must save buffer to update org-roam database."))
+          (user-error "Must save buffer to update org-roam database"))
         (org-roam-db-update-file file))
       (vtable-update-object (vtable-current-table) object))))
 
