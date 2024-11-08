@@ -66,7 +66,11 @@ the returned data is for.  VTABLE is the vtable this getter is for."
     ("Tags"
      (or (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)) ""))))
 
-;;; Major mode
+;;; Major mode and keymap
+(defvar-keymap org-roam-folgezettel-mode-map
+  :doc "Mode map for `org-roam-folgezettel-mode'."
+  "q" #'quit-window)
+
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
   :interactive nil
