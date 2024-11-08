@@ -30,7 +30,17 @@
 ;;;; Options
 (defgroup org-roam-folgezettel ()
   "Interfaces for org-roam nodes."
-  :group 'files)
+  :group 'files
+  :prefix "org-roam-folgezettel-")
+
+(defcustom org-roam-folgezettel-filter-function nil
+  "A function that filters the current node listing.
+This function takes one argument: the object described by
+`org-roam-folgezettel-list--objects'.  It should return non-nil if that
+node should be excluded from the listing, and nil otherwise."
+  :local t
+  :safe t
+  :type 'function)
 
 ;;;; Faces
 
@@ -152,19 +162,21 @@ Meant to be used as the formatter for tags."
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (let ((nodes (org-roam-db-query [ :select [id         ; 0
-                                             file       ; 1
-                                             level      ; 2
-                                             pos        ; 3
-                                             todo       ; 4
-                                             priority   ; 5
-                                             scheduled  ; 6
-                                             deadline   ; 7
-                                             title      ; 8
-                                             properties ; 9
-                                             olp]       ; 10
-                                    :from nodes])))
-    (cl-sort nodes #'org-roam-folgezettel--index-lessp
+  (let* ((nodes (org-roam-db-query [ :select [id         ; 0
+                                              file       ; 1
+                                              level      ; 2
+                                              pos        ; 3
+                                              todo       ; 4
+                                              priority   ; 5
+                                              scheduled  ; 6
+                                              deadline   ; 7
+                                              title      ; 8
+                                              properties ; 9
+                                              olp]       ; 10
+                                     :from nodes]))
+         (nodes-filtered
+          (cl-remove-if org-roam-folgezettel-filter-function nodes)))
+    (cl-sort nodes-filtered #'org-roam-folgezettel--index-lessp
              :key #'org-roam-folgezettel-list--retrieve-index)))
 
 (defun org-roam-folgezettel-list--getter (object column vtable)
@@ -233,6 +245,25 @@ Prompts for a new index for the node associated with OBJECT."
         (org-roam-db-update-file file))
       (vtable-update-object (vtable-current-table) object))))
 
+(defun org-roam-folgezettel-filter-directory ()
+  "Prompts for a directory to filter the current buffer's node listing."
+  (interactive nil org-roam-folgezettel-mode)
+  (let* ((subdirs
+          (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
+                  (seq-filter #'file-directory-p
+                              (directory-files org-roam-directory t "^[^.]" t))))
+         (subdir (expand-file-name
+                  (completing-read "Subdirectory: " subdirs)
+                  org-roam-directory)))
+    (setq-local org-roam-folgezettel-filter-function
+                `(lambda (object)
+                   ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
+                   (not (string-prefix-p ,subdir
+                                         (expand-file-name
+                                          (org-roam-folgezettel-list--retrieve-file object))))))
+    (message "Filtered nodes to the %s subdirectory" subdir)
+    (vtable-revert-command)))
+
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
@@ -240,7 +271,8 @@ Prompts for a new index for the node associated with OBJECT."
   "n" #'next-line
   "q" #'quit-window
   "RET" #'org-roam-folgezettel-open-node
-  "i" #'org-roam-folgezettel-edit-index)
+  "i" #'org-roam-folgezettel-edit-index
+  "d" #'org-roam-folgezettel-filter-directory)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
