@@ -66,6 +66,12 @@ the returned data is for.  VTABLE is the vtable this getter is for."
     ("Tags"
      (or (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)) ""))))
 
+;;; Major mode
+(define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
+  "Major mode for listing org-roam nodes."
+  :interactive nil
+  :group 'org-roam-folgezettel)
+
 ;;; Commands
 ;;;###autoload
 (defun org-roam-folgezettel-list ()
@@ -75,6 +81,7 @@ the returned data is for.  VTABLE is the vtable this getter is for."
     (with-current-buffer buf
       (let ((inhibit-read-only t))
         (erase-buffer)
+        (org-roam-folgezettel-mode)
         (make-vtable
          :columns '((:name "Index" :align right)
                     (:name "Title" :align left)
