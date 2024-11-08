@@ -61,21 +61,23 @@ OBJECT is an object of the type returned by
 the returned data is for.  VTABLE is the vtable this getter is for."
   (pcase (vtable-column vtable column)
     ("Title"
-     (nth 2 object))
+     (or (nth 2 object) "(No Title)"))
     ("Tags"
-     (cdr (assoc "ALLTAGS" (nth 6 object) #'string-equal)))))
+     (or (cdr (assoc "ALLTAGS" (nth 6 object) #'string-equal)) ""))))
 
 ;;; Commands
 ;;;###autoload
 (defun org-roam-folgezettel-list ()
   "List org-roam nodes."
   (interactive)
-  (make-vtable
-   :columns '((:name "Title" :align left)
-              (:name "Tags" :align right))
-   :objects-function #'org-roam-folgezettel-list--objects
-   :getter #'org-roam-folgezettel-list--getter
-   :separator-width 5))
+  (let ((inhibit-read-only t))
+    (make-vtable
+     :columns '((:name "Title" :align left)
+                (:name "Tags" :align right))
+     :objects-function #'org-roam-folgezettel-list--objects
+     :getter #'org-roam-folgezettel-list--getter
+     :separator-width 5))
+  (setq-local buffer-read-only t))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
