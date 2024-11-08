@@ -32,6 +32,8 @@
   "Interfaces for org-roam nodes."
   :group 'files)
 
+;;;; Faces
+
 ;;;; Internal
 
 ;;; Functions
@@ -89,6 +91,7 @@ Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
            (org-roam-folgezettel--index-padded-parts index2)))
 
 ;;;; Vtable
+;;;;; Retrieving values
 (defun org-roam-folgezettel-list--retrieve-index (object)
   "Retrieve the index string of OBJECT.
 Object is a list containing the information pertaining to a node.  See
@@ -107,6 +110,32 @@ Object is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)))
 
+;;;;; Formatters
+(defun org-roam-folgezettel--index-formatter (index)
+  "Propertize index INDEX.
+Meant to be used as the formatter for index numberings."
+  (let* ((parts (org-roam-folgezettel--index-split index))
+         (level (1- (length parts)))
+         (face
+          (if (= 0 (+ 1 (% (1- level) 8)))
+              'font-lock-warning-face
+            (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))))
+    (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
+                              (propertize index 'face face))))
+
+(defun org-roam-folgezettel--title-formatter (title)
+  "Propertize TITLE.
+Meant to be used as the formatter for titles."
+  (if (string= title "(No title)")
+      (propertize title 'face 'shadow)
+    title))
+
+(defun org-roam-folgezettel--tags-formatter (tags)
+  "Propertize a series of TAGS.
+Meant to be used as the formatter for tags."
+  (propertize tags 'face 'org-tag))
+
+;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
@@ -160,9 +189,15 @@ the returned data is for.  VTABLE is the vtable this getter is for."
         (erase-buffer)
         (org-roam-folgezettel-mode)
         (make-vtable
-         :columns '((:name "Index" :align left)
-                    (:name "Title" :align left)
-                    (:name "Tags" :align right))
+         :columns '(( :name "Index"
+                      :align left
+                      :formatter org-roam-folgezettel--index-formatter)
+                    ( :name "Title"
+                      :align left
+                      :formatter org-roam-folgezettel--title-formatter)
+                    ( :name "Tags"
+                      :align right
+                      :formatter org-roam-folgezettel--tags-formatter))
          :objects-function #'org-roam-folgezettel-list--objects
          :getter #'org-roam-folgezettel-list--getter
          :separator-width 2))
