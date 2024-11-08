@@ -92,6 +92,18 @@ Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
 
 ;;;; Vtable
 ;;;;; Retrieving values
+(defun org-roam-folgezettel-list--retrieve-file (object)
+  "Retrieve the file path of OBJECT.
+Object is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (nth 1 object))
+
+(defun org-roam-folgezettel-list--retrieve-point (object)
+  "Retrieve the node's point of OBJECT.
+Object is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (nth 3 object))
+
 (defun org-roam-folgezettel-list--retrieve-index (object)
   "Retrieve the index string of OBJECT.
 Object is a list containing the information pertaining to a node.  See
