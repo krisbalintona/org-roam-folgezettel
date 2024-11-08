@@ -152,17 +152,17 @@ Meant to be used as the formatter for tags."
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (let ((nodes (org-roam-db-query [ :select [nodes:id
-                                             nodes:file
-                                             nodes:level
-                                             nodes:pos
-                                             nodes:todo
-                                             nodes:priority
-                                             nodes:scheduled
-                                             nodes:deadline
-                                             nodes:title
-                                             nodes:properties
-                                             nodes:olp]
+  (let ((nodes (org-roam-db-query [ :select [id         ; 0
+                                             file       ; 1
+                                             level      ; 2
+                                             pos        ; 3
+                                             todo       ; 4
+                                             priority   ; 5
+                                             scheduled  ; 6
+                                             deadline   ; 7
+                                             title      ; 8
+                                             properties ; 9
+                                             olp]       ; 10
                                     :from nodes])))
     (cl-sort nodes #'org-roam-folgezettel--index-lessp
              :key #'org-roam-folgezettel-list--retrieve-index)))
