@@ -109,33 +109,39 @@ Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
 
 ;;;; Vtable
 ;;;;; Retrieving values
+(defun org-roam-folgezettel-list--retrieve-id (object)
+  "Retrieve the id of OBJECT.
+OBJECT is a list containing the information pertaining to a node.  See
+`org-roam-folgezettel-list--objects' for the format of this list."
+  (nth 0 object))
+
 (defun org-roam-folgezettel-list--retrieve-file (object)
   "Retrieve the file path of OBJECT.
-Object is a list containing the information pertaining to a node.  See
+OBJECT is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (nth 1 object))
 
 (defun org-roam-folgezettel-list--retrieve-pos (object)
   "Retrieve the node's position in OBJECT.
-Object is a list containing the information pertaining to a node.  See
+OBJECT is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (nth 3 object))
 
 (defun org-roam-folgezettel-list--retrieve-index (object)
   "Retrieve the index string of OBJECT.
-Object is a list containing the information pertaining to a node.  See
+OBJECT is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (cdr (assoc "ROAM_PLACE" (nth 9 object) #'string-equal)))
 
 (defun org-roam-folgezettel-list--retrieve-title (object)
   "Retrieve the title string of OBJECT.
-Object is a list containing the information pertaining to a node.  See
+OBJECT is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (nth 8 object))
 
 (defun org-roam-folgezettel-list--retrieve-tags (object)
   "Retrieve the tags of OBJECT.
-Object is a list containing the information pertaining to a node.  See
+OBJECT is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)))
 
@@ -283,6 +289,24 @@ If SUBDIR is provided, then this subdirectory (of the
   (widen)
   (vtable-revert-command))
 
+(defun org-roam-folgezettel-store-link (object)
+  "Call `org-store-link' on the node at point.
+OBJECT contains information about a node.  See
+`org-roam-folgezettel-list--objects' for the format OBJECT comes in."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (let* ((node-id (org-roam-folgezettel-list--retrieve-id object))
+         (description (org-roam-folgezettel-list--retrieve-title object)))
+    ;; Populate `org-store-link-plist'
+    (org-link-store-props
+     :type "id"
+     :description description
+     :link (concat "id:" node-id))
+    ;; Then add to `org-stored-links'
+    (push (list (plist-get org-store-link-plist :link)
+                (plist-get org-store-link-plist :description))
+          org-stored-links)
+    (message "Stored %s!" title)))
+
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
@@ -292,7 +316,8 @@ If SUBDIR is provided, then this subdirectory (of the
   "q" #'quit-window
   "RET" #'org-roam-folgezettel-open-node
   "i" #'org-roam-folgezettel-edit-index
-  "d" #'org-roam-folgezettel-filter-directory)
+  "d" #'org-roam-folgezettel-filter-directory
+  "w" #'org-roam-folgezettel-store-link)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
