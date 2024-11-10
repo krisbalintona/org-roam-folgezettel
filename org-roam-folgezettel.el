@@ -252,14 +252,17 @@ Prompts for a new index for the node associated with OBJECT."
         (org-roam-db-update-file file))
       (vtable-update-object (vtable-current-table) object))))
 
-(defun org-roam-folgezettel-filter-directory ()
-  "Prompts for a directory to filter the current buffer's node listing."
-  (interactive nil org-roam-folgezettel-mode)
-  (let* ((subdirs
-          (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
-                  (seq-filter #'file-directory-p
-                              (directory-files org-roam-directory t "^[^.]" t))))
-         (subdir (completing-read "Subdirectory: " subdirs)))
+(defun org-roam-folgezettel-filter-directory (&optional subdir)
+  "Prompts for a directory to filter the current buffer's node listing.
+If SUBDIR is provided, then this subdirectory (of the
+`org-roam-directory') will be filtered."
+  (interactive (list nil) org-roam-folgezettel-mode)
+  (let ((subdir (if subdir
+                    (string-trim subdir "/" "/")
+                  (completing-read "Subdirectory: "
+                                   (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
+                                           (seq-filter #'file-directory-p
+                                                       (directory-files org-roam-directory t "^[^.]" t)))))))
     (setq-local org-roam-folgezettel-filter-function
                 `(lambda (object)
                    ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
