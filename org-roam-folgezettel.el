@@ -275,13 +275,20 @@ If SUBDIR is provided, then this subdirectory (of the
                                           (org-roam-folgezettel-list--retrieve-file object)))))
                 org-roam-folgezettel-filter-indicator (format "%s" subdir))
     (message "Filtered nodes to the %s subdirectory" subdir)
-    (vtable-revert-command)))
+    (org-roam-folgezettel-refresh)))
+
+(defun org-roam-folgezettel-refresh ()
+  "Refresh the current `org-roam-folgezettel-mode' buffer."
+  (interactive)
+  (widen)
+  (vtable-revert-command))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
   "p" #'previous-line
   "n" #'next-line
+  "g" #'org-roam-folgezettel-refresh
   "q" #'quit-window
   "RET" #'org-roam-folgezettel-open-node
   "i" #'org-roam-folgezettel-edit-index
