@@ -215,6 +215,7 @@ the returned data is for.  VTABLE is the vtable this getter is for."
                         :formatter org-roam-folgezettel--index-formatter)
                       ( :name "Title"
                         :align left
+                        :width "85%"
                         :formatter org-roam-folgezettel--title-formatter)
                       ( :name "Tags"
                         :align right
