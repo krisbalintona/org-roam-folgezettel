@@ -112,8 +112,8 @@ Object is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (nth 1 object))
 
-(defun org-roam-folgezettel-list--retrieve-point (object)
-  "Retrieve the node's point of OBJECT.
+(defun org-roam-folgezettel-list--retrieve-pos (object)
+  "Retrieve the node's position in OBJECT.
 Object is a list containing the information pertaining to a node.  See
 `org-roam-folgezettel-list--objects' for the format of this list."
   (nth 3 object))
@@ -226,7 +226,10 @@ the returned data is for.  VTABLE is the vtable this getter is for."
   "Open the node at point.
 Opens the node associated with OBJECT."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (find-file (org-roam-folgezettel-list--retrieve-file object)))
+  (let ((file (org-roam-folgezettel-list--retrieve-file object))
+        (location (org-roam-folgezettel-list--retrieve-pos object)))
+    (find-file file)
+    (goto-char location)))
 
 (defun org-roam-folgezettel-edit-index (object)
   "Edit the index of the node at point.
@@ -235,7 +238,7 @@ Prompts for a new index for the node associated with OBJECT."
   (let* ((file (org-roam-folgezettel-list--retrieve-file object))
          (current-index (org-roam-folgezettel-list--retrieve-index object))
          (new-index (read-string "New index numbering: " current-index))
-         (node-point (org-roam-folgezettel-list--retrieve-point object))
+         (node-point (org-roam-folgezettel-list--retrieve-pos object))
          (save-silently t))
     (unless (string= current-index new-index)
       (with-current-buffer (find-file-noselect file)
