@@ -247,9 +247,24 @@ Prompts for a new index for the node associated with OBJECT."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-folgezettel-list--retrieve-file object))
          (current-index (org-roam-folgezettel-list--retrieve-index object))
-         (new-index (read-string "New index numbering: " current-index))
          (node-point (org-roam-folgezettel-list--retrieve-pos object))
-         (save-silently t))
+         (save-silently t)
+         (all-index-numbers
+          (cl-remove-if
+           (lambda (index) (or (equal nil index) (string-empty-p index)))
+           (cl-loop for node in (org-roam-node-list)
+                    collect (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))))
+         (prompt "New index numbering: ")
+         (retry-p t)
+         new-index)
+    (while retry-p
+      (setq new-index (read-string prompt current-index))
+      (if (member new-index all-index-numbers)
+          (progn
+            (setq retry-p t
+                  prompt (format "Index number %s taken! Please choose another index numbering: " new-index)))
+        (setq retry-p nil)
+        (message "Setting index to %s" new-index)))
     (unless (string= current-index new-index)
       (with-current-buffer (find-file-noselect file)
         (save-excursion
