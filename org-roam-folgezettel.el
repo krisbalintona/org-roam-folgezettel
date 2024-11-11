@@ -235,7 +235,8 @@ the returned data is for.  VTABLE is the vtable this getter is for."
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2)))
-      (setq-local buffer-read-only t))
+      (setq-local buffer-read-only t)
+      (toggle-truncate-lines 1))
     (display-buffer buf)))
 
 (defun org-roam-folgezettel-open-node (object)
