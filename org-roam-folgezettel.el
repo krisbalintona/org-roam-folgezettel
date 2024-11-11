@@ -221,7 +221,13 @@ the returned data is for.  VTABLE is the vtable this getter is for."
                         :formatter org-roam-folgezettel--index-formatter)
                       ( :name "Title"
                         :align left
-                        :width "85%"
+                        ;; TODO 2024-11-10: Figure out how to use a percentage.
+                        ;; I think setting a percentage only works if the table
+                        ;; is called in a visible buffer.  Additionally, for
+                        ;; better comparability with `display-buffer-alist',
+                        ;; ideally the major mode must also be set before
+                        ;; creating the table.
+                        :width 130
                         :formatter org-roam-folgezettel--title-formatter)
                       ( :name "Tags"
                         :align right
