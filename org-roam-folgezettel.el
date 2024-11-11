@@ -322,6 +322,24 @@ OBJECT contains information about a node.  See
           org-stored-links)
     (message "Stored %s!" title)))
 
+(defun org-roam-folgezettel-move-down (nlines)
+  "Move the current line down NLINES."
+  (interactive "p" org-roam-folgezettel-mode)
+  (org-roam-folgezettel-move-up (- nlines)))
+
+(defun org-roam-folgezettel-move-up (nlines)
+  "Move the current line up NLINES."
+  (interactive "p" org-roam-folgezettel-mode)
+  (let ((table (vtable-current-table))
+        (object (vtable-current-object))
+        (object-location (- (line-number-at-pos)
+                            (save-excursion
+                              (vtable-beginning-of-table)
+                              (line-number-at-pos)))))
+    (vtable-remove-object table object)
+    (vtable-insert-object table object (+ object-location (- nlines)))
+    (vtable-goto-object object)))
+
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
@@ -332,6 +350,8 @@ OBJECT contains information about a node.  See
   "RET" #'org-roam-folgezettel-open-node
   "i" #'org-roam-folgezettel-edit-index
   "d" #'org-roam-folgezettel-filter-directory
+  "M-<up>" #'org-roam-folgezettel-move-up
+  "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
