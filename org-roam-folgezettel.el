@@ -283,6 +283,16 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
+(defun org-roam-folgezettel-filter-pop ()
+  "Undo/pop the latest filter operation."
+  (interactive)
+  (setq-local org-roam-folgezettel-filter-functions (butlast org-roam-folgezettel-filter-functions)
+              org-roam-folgezettel-filter-indicator
+              (if-let ((pos (cl-position ?, (substring org-roam-folgezettel-filter-indicator 0 -1) :from-end t)))
+                  (substring org-roam-folgezettel-filter-indicator 0 pos)
+                org-roam-folgezettel-filter-indicator))
+  (org-roam-folgezettel-refresh))
+
 (defun org-roam-folgezettel-filter-directory (subdir)
   "Filter the current buffer's node listing to SUBDIR.
 SUBDIR is a subdirectory of the `org-roam-directory'.
@@ -383,6 +393,7 @@ If called interactively, NODE is the node at point."
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
+  "/ P" #'org-roam-folgezettel-filter-pop
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person)
 
