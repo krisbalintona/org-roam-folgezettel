@@ -305,6 +305,24 @@ If SUBDIR is provided, then this subdirectory (of the
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
+(defun org-roam-folgezettel-filter-person (person)
+  "Filter the current node listing by PERSON.
+PERSON is the value of the \"ROAM_PERSON\" property.
+
+If called interactively, prompts for a person to filter by."
+  (interactive (list (read-string "Filter by the following person: ")) org-roam-folgezettel-mode)
+  (add-to-list 'org-roam-folgezettel-filter-functions
+               `(lambda (node)
+                  ,(format "Filter nodes to ones only related to %s" person)
+                  (let ((prop-value (cdr (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal))))
+                    (when (and prop-value (not (string-empty-p prop-value)))
+                      (string-equal (string-trim (downcase ,person))
+                                    (string-trim (downcase prop-value)))))))
+  (setq-local org-roam-folgezettel-filter-indicator
+              (concat org-roam-folgezettel-filter-indicator (format "person:%s," person)))
+  (message "Filtered nodes by the %s person" person)
+  (org-roam-folgezettel-refresh))
+
 ;;;; Other
 ;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
@@ -362,10 +380,11 @@ If called interactively, NODE is the node at point."
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
-  "d" #'org-roam-folgezettel-filter-directory
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
-  "w" #'org-roam-folgezettel-store-link)
+  "w" #'org-roam-folgezettel-store-link
+  "/ d" #'org-roam-folgezettel-filter-directory
+  "/ p" #'org-roam-folgezettel-filter-person)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
