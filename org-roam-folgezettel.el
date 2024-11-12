@@ -239,28 +239,39 @@ the returned data is for.  VTABLE is the vtable this getter is for."
           (toggle-truncate-lines 1))))
     (display-buffer buf)))
 
-(defun org-roam-folgezettel-open-node (object &optional display-action)
+(defun org-roam-folgezettel-open-node (object &optional display-action no-select)
   "Open the node at point.
-Opens the node associated with OBJECT.  If DISPLAY-ACTION is supplied,
-then use that function as the ACTION argument for the `display-buffer'
-function."
+Opens the node associated with OBJECT.
+
+If DISPLAY-ACTION is supplied, then use that function as the ACTION
+argument for the `display-buffer' function.
+
+If NO-SELECT is supplied, then don't select the buffer."
   (interactive (list (vtable-current-object) nil) org-roam-folgezettel-mode)
   (let* ((file (org-roam-folgezettel-list--retrieve-file object))
          (location (org-roam-folgezettel-list--retrieve-pos object))
-         (buf (find-file-noselect file)))
+         (buf (find-file-noselect file))
+         (display-buffer-overriding-action
+          (list (or display-action 'display-buffer-same-window)))
+         (window (display-buffer buf)))
     (with-current-buffer buf
       (goto-char location))
-    (if display-action
-        (display-buffer buf display-action)
-      (switch-to-buffer buf))))
+    (unless no-select
+      (select-window window))))
+
+(defun org-roam-folgezettel-open-node-other-window (object)
+  "Display the node at point.
+Shows the node associated with OBJECT in a new window without selecting
+the buffer."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (org-roam-folgezettel-open-node object 'display-buffer-pop-up-window))
 
 (defun org-roam-folgezettel-display-node (object)
   "Display the node at point.
 Shows the node associated with OBJECT in a new window without selecting
 the buffer."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (save-excursion
-    (org-roam-folgezettel-open-node object 'display-buffer-pop-up-window)))
+  (org-roam-folgezettel-open-node object 'display-buffer-pop-up-window :no-select))
 
 (defun org-roam-folgezettel-edit-index (object)
   "Edit the index of the node at point.
@@ -373,6 +384,7 @@ OBJECT contains information about a node.  See
   "q" #'quit-window
   "x" #'kill-this-buffer
   "RET" #'org-roam-folgezettel-open-node
+  "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
   "d" #'org-roam-folgezettel-filter-directory
