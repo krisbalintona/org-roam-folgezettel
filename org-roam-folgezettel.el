@@ -281,9 +281,7 @@ Prompts for a new index for the node associated with OBJECT."
           (goto-char node-point)
           (org-roam-node-at-point 'assert)
           (org-set-property "ROAM_PLACE" new-index))
-        (if (y-or-n-p (format "Save buffer %s? " file))
-            (save-buffer)
-          (user-error "Must save buffer to update org-roam database"))
+        (save-buffer)
         (org-roam-db-update-file file))
       (vtable-update-object (vtable-current-table) object))))
 
