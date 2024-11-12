@@ -308,8 +308,10 @@ If SUBDIR is provided, then this subdirectory (of the
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
-  (widen)
-  (vtable-revert-command))
+  (let ((object (vtable-current-object)))
+    (widen)
+    (vtable-revert-command)
+    (vtable-goto-object object)))
 
 (defun org-roam-folgezettel-store-link (object)
   "Call `org-store-link' on the node at point.
