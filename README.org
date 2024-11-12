@@ -1,0 +1,16 @@
+#+title: org-roam-folgezettel
+
+#  LocalWords:  Roadmap
+
+* Features
+
++ List all org-roam nodes
++ Filtering results
+  - By subdirectory
+
+* Roadmap
+
++ [-] Filtering
+  - [X] By subdirectory
+  - [ ] By arbitrary property
+  - [ ] By any predicate
