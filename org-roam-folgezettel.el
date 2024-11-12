@@ -288,6 +288,7 @@ If SUBDIR is provided, then this subdirectory (of the
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
+;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
