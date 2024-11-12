@@ -371,6 +371,7 @@ OBJECT contains information about a node.  See
   "n" #'next-line
   "g" #'org-roam-folgezettel-refresh
   "q" #'quit-window
+  "x" #'kill-this-buffer
   "RET" #'org-roam-folgezettel-open-node
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
