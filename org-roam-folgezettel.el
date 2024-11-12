@@ -199,6 +199,7 @@ returned data is for.  VTABLE is the vtable this getter is for."
           (toggle-truncate-lines 1))))
     (display-buffer buf)))
 
+;;;; Showing nodes
 (defun org-roam-folgezettel-open-node (node &optional display-action no-select)
   "Open the NODE at point.
 If DISPLAY-ACTION is supplied, then use that function as the ACTION
@@ -231,6 +232,7 @@ object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (org-roam-folgezettel-open-node node 'display-buffer-pop-up-window :no-select))
 
+;;;; Editing
 (defun org-roam-folgezettel-edit-index (node)
   "Edit the index of NODE.
 Prompts for a new index for NODE.  If called interactively, NODE is the
@@ -267,6 +269,7 @@ node at point."
         (org-roam-db-update-file file))
       (vtable-update-object (vtable-current-table) node))))
 
+;;;; Filtering
 (defun org-roam-folgezettel-filter-directory (&optional subdir)
   "Prompts for a directory to filter the current buffer's node listing.
 If SUBDIR is provided, then this subdirectory (of the
@@ -288,6 +291,7 @@ If SUBDIR is provided, then this subdirectory (of the
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
+;;;; Other
 ;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer."
