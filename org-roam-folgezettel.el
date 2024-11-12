@@ -256,11 +256,14 @@ Prompts for a new index for the node associated with OBJECT."
          (current-index (org-roam-folgezettel-list--retrieve-index object))
          (node-point (org-roam-folgezettel-list--retrieve-pos object))
          (save-silently t)
-         (all-index-numbers
-          (cl-remove-if
-           (lambda (index) (or (equal nil index) (string-empty-p index)))
-           (cl-loop for node in (org-roam-node-list)
-                    collect (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))))
+         (get-index-func
+          (lambda (node) (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal))))
+         (all-index-numbers          ; All index numbers in current subdirectory
+          (cl-loop for node in (org-roam-node-list)
+                   when (and (file-in-directory-p (org-roam-node-file node) (file-name-directory file))
+                             (not (or (equal nil (funcall get-index-func node))
+                                      (string-empty-p (funcall get-index-func node)))))
+                   collect (funcall get-index-func node)))
          (prompt "New index numbering: ")
          (retry-p t)
          new-index)
