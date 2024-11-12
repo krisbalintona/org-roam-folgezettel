@@ -38,9 +38,9 @@
 
 (defcustom org-roam-folgezettel-filter-function nil
   "A function that filters the current node listing.
-This function takes one argument: the object described by
-`org-roam-folgezettel-list--objects'.  It should return non-nil if that
-node should be excluded from the listing, and nil otherwise."
+This function takes one argument: an org-roam node.  It should return
+non-nil if that node should be excluded from the listing, and nil
+otherwise."
   :local t
   :safe t
   :type 'function)
@@ -109,41 +109,13 @@ Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
 
 ;;;; Vtable
 ;;;;; Retrieving values
-(defun org-roam-folgezettel-list--retrieve-id (object)
-  "Retrieve the id of OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (nth 0 object))
+(defun org-roam-folgezettel-list--retrieve-index (node)
+  "Retrieve the index string of NODE."
+  (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))
 
-(defun org-roam-folgezettel-list--retrieve-file (object)
-  "Retrieve the file path of OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (nth 1 object))
-
-(defun org-roam-folgezettel-list--retrieve-pos (object)
-  "Retrieve the node's position in OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (nth 3 object))
-
-(defun org-roam-folgezettel-list--retrieve-index (object)
-  "Retrieve the index string of OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (cdr (assoc "ROAM_PLACE" (nth 9 object) #'string-equal)))
-
-(defun org-roam-folgezettel-list--retrieve-title (object)
-  "Retrieve the title string of OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (nth 8 object))
-
-(defun org-roam-folgezettel-list--retrieve-tags (object)
-  "Retrieve the tags of OBJECT.
-OBJECT is a list containing the information pertaining to a node.  See
-`org-roam-folgezettel-list--objects' for the format of this list."
-  (cdr (assoc "ALLTAGS" (nth 9 object) #'string-equal)))
+(defun org-roam-folgezettel-list--retrieve-tags (node)
+  "Retrieve the tags of NODE."
+  (cdr (assoc "ALLTAGS" (org-roam-node-properties node) #'string-equal)))
 
 ;;;;; Formatters
 (defun org-roam-folgezettel--index-formatter (index)
@@ -175,35 +147,23 @@ Meant to be used as the formatter for tags."
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (let* ((nodes (org-roam-db-query [ :select [id         ; 0
-                                              file       ; 1
-                                              level      ; 2
-                                              pos        ; 3
-                                              todo       ; 4
-                                              priority   ; 5
-                                              scheduled  ; 6
-                                              deadline   ; 7
-                                              title      ; 8
-                                              properties ; 9
-                                              olp]       ; 10
-                                     :from nodes]))
+  (let* ((nodes (org-roam-node-list))
          (nodes-filtered
           (cl-remove-if org-roam-folgezettel-filter-function nodes)))
     (cl-sort nodes-filtered #'org-roam-folgezettel--index-lessp
              :key #'org-roam-folgezettel-list--retrieve-index)))
 
-(defun org-roam-folgezettel-list--getter (object column vtable)
+(defun org-roam-folgezettel-list--getter (node column vtable)
   "Getter for vtable objects.
-OBJECT is an object of the type returned by
-`org-roam-folgezettel-list--objects'.  COLUMN is the index of the column
-the returned data is for.  VTABLE is the vtable this getter is for."
+NODE is an org-roam node.  COLUMN is the index of the column the
+returned data is for.  VTABLE is the vtable this getter is for."
   (pcase (vtable-column vtable column)
     ("Index"
-     (or (org-roam-folgezettel-list--retrieve-index object) ""))
+     (or (org-roam-folgezettel-list--retrieve-index node) ""))
     ("Title"
-     (or (org-roam-folgezettel-list--retrieve-title object) "(No Title)"))
+     (or (org-roam-node-title node) "(No Title)"))
     ("Tags"
-     (or (org-roam-folgezettel-list--retrieve-tags object) ""))))
+     (or (org-roam-folgezettel-list--retrieve-tags node) ""))))
 
 ;;; Commands
 ;;;###autoload
@@ -239,17 +199,15 @@ the returned data is for.  VTABLE is the vtable this getter is for."
           (toggle-truncate-lines 1))))
     (display-buffer buf)))
 
-(defun org-roam-folgezettel-open-node (object &optional display-action no-select)
-  "Open the node at point.
-Opens the node associated with OBJECT.
-
+(defun org-roam-folgezettel-open-node (node &optional display-action no-select)
+  "Open the NODE at point.
 If DISPLAY-ACTION is supplied, then use that function as the ACTION
 argument for the `display-buffer' function.
 
 If NO-SELECT is supplied, then don't select the buffer."
   (interactive (list (vtable-current-object) nil) org-roam-folgezettel-mode)
-  (let* ((file (org-roam-folgezettel-list--retrieve-file object))
-         (location (org-roam-folgezettel-list--retrieve-pos object))
+  (let* ((file (org-roam-node-file node))
+         (location (org-roam-node-point node))
          (buf (find-file-noselect file))
          (display-buffer-overriding-action
           (list (or display-action 'display-buffer-same-window)))
@@ -259,36 +217,35 @@ If NO-SELECT is supplied, then don't select the buffer."
     (unless no-select
       (select-window window))))
 
-(defun org-roam-folgezettel-open-node-other-window (object)
-  "Display the node at point.
-Shows the node associated with OBJECT in a new window without selecting
-the buffer."
+(defun org-roam-folgezettel-open-node-other-window (node)
+  "Show NODE in a new window, selected the buffer.
+If called interactively, NODE is the node corresponding to the vtable
+object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (org-roam-folgezettel-open-node object 'display-buffer-pop-up-window))
+  (org-roam-folgezettel-open-node node 'display-buffer-pop-up-window))
 
-(defun org-roam-folgezettel-display-node (object)
-  "Display the node at point.
-Shows the node associated with OBJECT in a new window without selecting
-the buffer."
+(defun org-roam-folgezettel-display-node (node)
+  "Show NODE in a new window without selected the buffer.
+If called interactively, NODE is the node corresponding to the vtable
+object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (org-roam-folgezettel-open-node object 'display-buffer-pop-up-window :no-select))
+  (org-roam-folgezettel-open-node node 'display-buffer-pop-up-window :no-select))
 
-(defun org-roam-folgezettel-edit-index (object)
-  "Edit the index of the node at point.
-Prompts for a new index for the node associated with OBJECT."
+(defun org-roam-folgezettel-edit-index (node)
+  "Edit the index of NODE.
+Prompts for a new index for NODE.  If called interactively, NODE is the
+node at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (let* ((file (org-roam-folgezettel-list--retrieve-file object))
-         (current-index (org-roam-folgezettel-list--retrieve-index object))
-         (node-point (org-roam-folgezettel-list--retrieve-pos object))
+  (let* ((file (org-roam-node-file node))
+         (current-index (org-roam-folgezettel-list--retrieve-index node))
+         (node-point (org-roam-node-point node))
          (save-silently t)
-         (get-index-func
-          (lambda (node) (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal))))
          (all-index-numbers          ; All index numbers in current subdirectory
           (cl-loop for node in (org-roam-node-list)
                    when (and (file-in-directory-p (org-roam-node-file node) (file-name-directory file))
-                             (not (or (equal nil (funcall get-index-func node))
-                                      (string-empty-p (funcall get-index-func node)))))
-                   collect (funcall get-index-func node)))
+                             (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
+                                      (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
+                   collect (org-roam-folgezettel-list--retrieve-index node)))
          (prompt "New index numbering: ")
          (retry-p t)
          new-index)
@@ -308,7 +265,7 @@ Prompts for a new index for the node associated with OBJECT."
           (org-set-property "ROAM_PLACE" new-index))
         (save-buffer)
         (org-roam-db-update-file file))
-      (vtable-update-object (vtable-current-table) object))))
+      (vtable-update-object (vtable-current-table) node))))
 
 (defun org-roam-folgezettel-filter-directory (&optional subdir)
   "Prompts for a directory to filter the current buffer's node listing.
@@ -322,11 +279,11 @@ If SUBDIR is provided, then this subdirectory (of the
                                            (seq-filter #'file-directory-p
                                                        (directory-files org-roam-directory t "^[^.]" t)))))))
     (setq-local org-roam-folgezettel-filter-function
-                `(lambda (object)
+                `(lambda (node)
                    ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
                    (not (string-prefix-p ,(expand-file-name subdir org-roam-directory)
                                          (expand-file-name
-                                          (org-roam-folgezettel-list--retrieve-file object)))))
+                                          (org-roam-node-file node)))))
                 org-roam-folgezettel-filter-indicator (format "%s" subdir))
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
@@ -339,17 +296,16 @@ If SUBDIR is provided, then this subdirectory (of the
     (vtable-revert-command)
     (vtable-goto-object object)))
 
-(defun org-roam-folgezettel-store-link (object)
-  "Call `org-store-link' on the node at point.
-OBJECT contains information about a node.  See
-`org-roam-folgezettel-list--objects' for the format OBJECT comes in."
+(defun org-roam-folgezettel-store-link (node)
+  "Call `org-store-link' on NODE.
+If called interactively, NODE is the node at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (let* ((node-id (org-roam-folgezettel-list--retrieve-id object))
-         (description (org-roam-folgezettel-list--retrieve-title object)))
+  (let* ((node-id (org-roam-node-id node))
+         (title (org-roam-node-title node)))
     ;; Populate `org-store-link-plist'
     (org-link-store-props
      :type "id"
-     :description description
+     :description title
      :link (concat "id:" node-id))
     ;; Then add to `org-stored-links'
     (push (list (plist-get org-store-link-plist :link)
