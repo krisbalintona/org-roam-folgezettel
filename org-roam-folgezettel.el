@@ -36,14 +36,14 @@
   :group 'files
   :prefix "org-roam-folgezettel-")
 
-(defcustom org-roam-folgezettel-filter-function nil
-  "A function that filters the current node listing.
-This function takes one argument: an org-roam node.  It should return
-non-nil if that node should be excluded from the listing, and nil
-otherwise."
+(defcustom org-roam-folgezettel-filter-functions (list)
+  "A list of functions that filter the current node listing.
+Each function in this list takes one argument: an org-roam node.  It
+should return nil if that node should be excluded from the listing, and
+non-nil if it should be included."
   :local t
   :safe t
-  :type 'function)
+  :type '(repeat function))
 
 ;;;; Faces
 
@@ -143,13 +143,26 @@ Meant to be used as the formatter for tags."
   (propertize tags 'face 'org-tag))
 
 ;;;;; Composition of vtable
+;; REVIEW 2024-11-12: For now, I opt for a recursive solution because I worry
+;; about performance: if we have many predicates, I do not want to iterate
+;; through all nodes for each predicate, then concatenate the results.  This is
+;; the best solution I can think of for now, since the list decreases in size
+;; for every predicate.  The drawback, however, is that I can basically only
+;; have "AND" filtering; there is no "OR" operator available with this method.
+(defun org-roam-folgezettel--filter-recursively (predicates list)
+  "Recursively filter LIST with each predicate in PREDICATES."
+  (if (null predicates)
+      list
+    (org-roam-folgezettel--filter-recursively (cdr predicates)
+                                              (cl-remove-if-not (car predicates) list))))
+
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
   (let* ((nodes (org-roam-node-list))
          (nodes-filtered
-          (cl-remove-if org-roam-folgezettel-filter-function nodes)))
+          (org-roam-folgezettel--filter-recursively org-roam-folgezettel-filter-functions nodes)))
     (cl-sort nodes-filtered #'org-roam-folgezettel--index-lessp
              :key #'org-roam-folgezettel-list--retrieve-index)))
 
@@ -281,13 +294,14 @@ If SUBDIR is provided, then this subdirectory (of the
                                    (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
                                            (seq-filter #'file-directory-p
                                                        (directory-files org-roam-directory t "^[^.]" t)))))))
-    (setq-local org-roam-folgezettel-filter-function
-                `(lambda (node)
-                   ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
-                   (not (string-prefix-p ,(expand-file-name subdir org-roam-directory)
-                                         (expand-file-name
-                                          (org-roam-node-file node)))))
-                org-roam-folgezettel-filter-indicator (format "%s" subdir))
+    (add-to-list 'org-roam-folgezettel-filter-functions
+                 `(lambda (node)
+                    ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
+                    (string-prefix-p ,(expand-file-name subdir org-roam-directory)
+                                     (expand-file-name
+                                      (org-roam-node-file node)))))
+    (setq-local org-roam-folgezettel-filter-indicator
+                (concat org-roam-folgezettel-filter-indicator (format "%s," subdir)))
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
@@ -360,7 +374,7 @@ If called interactively, NODE is the node at point."
   :after-hook (set (make-local-variable 'mode-line-misc-info)
                    (append
                     (list
-                     (list 'org-roam-folgezettel-filter-function
+                     (list 'org-roam-folgezettel-filter-functions
                            '(:eval (format " [%s]" org-roam-folgezettel-filter-indicator)))))))
 
 ;;; Provide
