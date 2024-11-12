@@ -283,17 +283,17 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-directory (&optional subdir)
-  "Prompts for a directory to filter the current buffer's node listing.
-If SUBDIR is provided, then this subdirectory (of the
-`org-roam-directory') will be filtered."
-  (interactive (list nil) org-roam-folgezettel-mode)
-  (let ((subdir (if subdir
-                    (string-trim subdir "/" "/")
-                  (completing-read "Subdirectory: "
-                                   (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
-                                           (seq-filter #'file-directory-p
-                                                       (directory-files org-roam-directory t "^[^.]" t)))))))
+(defun org-roam-folgezettel-filter-directory (subdir)
+  "Filter the current buffer's node listing to SUBDIR.
+SUBDIR is a subdirectory of the `org-roam-directory'.
+
+If called interactively, SUBDIR is prompted for."
+  (interactive (list (completing-read "Subdirectory: "
+                                      (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
+                                              (seq-filter #'file-directory-p
+                                                          (directory-files org-roam-directory t "^[^.]" t)))))
+               org-roam-folgezettel-mode)
+  (let ((subdir (string-trim subdir "/" "/")))
     (add-to-list 'org-roam-folgezettel-filter-functions
                  `(lambda (node)
                     ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
