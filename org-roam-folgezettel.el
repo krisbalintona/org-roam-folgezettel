@@ -301,7 +301,7 @@ If SUBDIR is provided, then this subdirectory (of the
                                      (expand-file-name
                                       (org-roam-node-file node)))))
     (setq-local org-roam-folgezettel-filter-indicator
-                (concat org-roam-folgezettel-filter-indicator (format "%s," subdir)))
+                (concat org-roam-folgezettel-filter-indicator (format "subdir:%s," subdir)))
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
@@ -375,7 +375,8 @@ If called interactively, NODE is the node at point."
                    (append
                     (list
                      (list 'org-roam-folgezettel-filter-functions
-                           '(:eval (format " [%s]" org-roam-folgezettel-filter-indicator)))))))
+                           '(:eval (format " [%s]"
+                                           (string-remove-suffix "," (string-trim org-roam-folgezettel-filter-indicator)))))))))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
