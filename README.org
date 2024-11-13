@@ -14,3 +14,7 @@
   - [X] By subdirectory
   - [ ] By arbitrary property
   - [ ] By any predicate
++ [ ] Navigation by index numbering
+  - [ ] Forward/backward same level
+  - [ ] Descend level
+  - [ ] Ascend level
