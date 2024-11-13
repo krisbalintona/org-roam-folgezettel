@@ -4,7 +4,7 @@
 
 * Features
 
-+ List all org-roam nodes
++ List all org-roam nodes using ~vtable.el~
 + Filtering results
   - By subdirectory
 
