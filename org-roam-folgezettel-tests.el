@@ -58,6 +58,12 @@ tests that should be run."
    (should (equal (org-roam-folgezettel--index-padded-parts i2)
                   "    1.    1.    a.    1"))
 
+   ;; Negative numbers
+   (should (equal (org-roam-folgezettel--index-normalize "1.-1ab-30")
+                  "1.-1.ab.-30"))
+   (should (equal (org-roam-folgezettel--index-split "1.-1ab-30")
+                  '("1" "-1" "ab" "-30")))
+
    ;; Empty
    (should (equal (org-roam-folgezettel--index-padded-parts i3)
                   ""))
@@ -99,6 +105,22 @@ tests that should be run."
 
    ;; Long vs long
    (should (equal (org-roam-folgezettel--index-lessp "16.23a54z34" "16.23a54z35")
+                  t))
+
+   ;; Zero numbering
+   (should (equal (org-roam-folgezettel--index-lessp "1.0" "1.1")
+                  t))
+   (should (equal (org-roam-folgezettel--index-lessp "1.1" "1.0")
+                  nil))
+
+   ;; Negative numbering
+   (should (equal (org-roam-folgezettel--index-lessp "1.1" "1.-1")
+                  nil))
+   (should (equal (org-roam-folgezettel--index-lessp "1.-1" "1.1")
+                  t))
+   (should (equal (org-roam-folgezettel--index-lessp "1.-1" "1.-2")
+                  nil))
+   (should (equal (org-roam-folgezettel--index-lessp "1.-10" "1.-2")
                   t))))
 
 ;;; Provide

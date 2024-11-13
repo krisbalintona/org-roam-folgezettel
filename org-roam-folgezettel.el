@@ -58,10 +58,12 @@ Inspired by tablist.el's filter indicator.  Is added to
 (defun org-roam-folgezettel--index-normalize (index)
   "Normalized INDEX into a signature whose parts are separated by \".\".
 
-This means that every transition from number to letter or letter to
-number warrants the insertion of a \".\" to delimit it.  This is a
-useful operation for later index numbering operations for sorting; see
-`org-roam-folgezettel--index-split' and
+This means that every transition from integer (positive or negative) to
+letter or letter to integer (positive or negative) warrants the
+insertion of a \".\" to delimit it.
+
+This is a useful operation for later index numbering operations for
+sorting; see `org-roam-folgezettel--index-split' and
 `org-roam-folgezettel--index-padded-parts'.
 
 A special case is when INDEX is an empty string.  Since we want nodes
@@ -71,7 +73,7 @@ these nodes an index of \"0\", which sorts them above every other index.
 This function is a modified version from Protesilaos Stavrou, found in
 https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
   (replace-regexp-in-string
-   (rx (group (+? alpha)) (group digit)) "\\1.\\2"
+   (rx (group (+? alpha)) (group (or digit "-"))) "\\1.\\2"
    (replace-regexp-in-string
     (rx (group (+? digit)) (group alpha)) "\\1.\\2"
     (or index "0"))))
@@ -101,11 +103,31 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
    "."))
 
 (defun org-roam-folgezettel--index-lessp (index1 index2)
-  "Compare two strings based on my index numbering sorting rules.
-Returns t if INDEX1 should be sorted before INDEX2, nil otherwise.  Uses
-`string<' to compare strings."
-  (string< (org-roam-folgezettel--index-padded-parts index1)
-           (org-roam-folgezettel--index-padded-parts index2)))
+  "Compare INDEX1 and INDEX2 based on Luhmann-style numbering.
+Return t if INDEX1 should be sorted before INDEX2, nil otherwise.
+Handles mixed numeric and alphabetic components in index parts."
+  (let ((parts1 (org-roam-folgezettel--index-split index1))
+        (parts2 (org-roam-folgezettel--index-split index2)))
+    (catch 'done
+      (while (or parts1 parts2)
+        (let ((part1 (pop parts1))
+              (part2 (pop parts2)))
+          (cond
+           ;; If only one part is empty, it should be considered "less"
+           ((and (null part1) part2) (throw 'done t))
+           ((and (null part2) part1) (throw 'done nil))
+           ;; Compare numeric parts as numbers
+           ((and (string-match-p "^-?[0-9]+$" part1)
+                 (string-match-p "^-?[0-9]+$" part2))
+            (let ((num1 (string-to-number part1))
+                  (num2 (string-to-number part2)))
+              (when (/= num1 num2)
+                (throw 'done (< num1 num2)))))
+           ;; Otherwise, compare alphabetic or mixed parts as strings
+           (t (when (not (string= part1 part2))
+                (throw 'done (string< part1 part2)))))))
+      ;; If we loop through all parts without difference, they are equal
+      nil)))
 
 ;;;; Vtable
 ;;;;; Retrieving values
