@@ -151,19 +151,22 @@ Handles mixed numeric and alphabetic components in index parts."
 Meant to be used as the formatter for index numberings."
   (let* ((parts (org-roam-folgezettel--index-split index))
          (level (1- (length parts)))
-         (outline-face
-          (if (= 0 (+ 1 (% (1- level) 8)))
-              'font-lock-warning-face
-            (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))))
+         (outline-color
+          (when parts
+            (face-foreground
+             (if (= 0 (+ 1 (% (1- level) 8)))
+                 'font-lock-warning-face
+               (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))
+             nil t))))
     (pcase org-roam-folgezettel-index-color-style
       ('color-last
        (if parts
            (concat (propertize (string-remove-suffix (car (last parts)) index) 'face 'shadow)
-                   (propertize (car (last parts)) 'face `(:weight bold :inherit ,outline-face)))
+                   (propertize (car (last parts)) 'face `(:weight heavy :foreground ,outline-color)))
          ""))
       ('color-full
        (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
-                                 (propertize index 'face outline-face))))))
+                                 (propertize index 'face `(:foreground ,outline-color)))))))
 
 (defun org-roam-folgezettel--title-formatter (title)
   "Propertize TITLE.
