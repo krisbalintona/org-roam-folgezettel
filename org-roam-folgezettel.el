@@ -301,8 +301,7 @@ node at point."
           (progn
             (setq retry-p t
                   prompt (format "Index number %s taken! Please choose another index numbering: " new-index)))
-        (setq retry-p nil)
-        (message "Setting index to %s" new-index)))
+        (setq retry-p nil)))
     (unless (string= current-index new-index)
       (with-current-buffer (find-file-noselect file)
         (save-excursion
@@ -310,7 +309,8 @@ node at point."
           (org-roam-node-at-point 'assert)
           (org-set-property "ROAM_PLACE" new-index))
         (save-buffer)
-        (org-roam-db-update-file file))
+        (org-roam-db-update-file file)
+        (message "Set index of %s to %s" (org-roam-node-title node) new-index))
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
