@@ -273,6 +273,7 @@ If NO-SELECT is supplied, then don't select the buffer."
          (display-buffer-overriding-action
           (list (or display-action 'display-buffer-same-window)))
          (window (display-buffer buf)))
+    ;; FIXME 2024-11-14: Point is not moved when NO-SELECT is non-nil
     (with-current-buffer buf
       (goto-char location))
     (unless no-select
