@@ -403,6 +403,8 @@ If called interactively, NODE is the node at point."
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
+  "SPC" #'scroll-up-command
+  "DEL" #'scroll-down-command
   "p" #'previous-line
   "n" #'next-line
   "g" #'org-roam-folgezettel-refresh
