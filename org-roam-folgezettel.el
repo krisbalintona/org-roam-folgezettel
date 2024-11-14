@@ -407,7 +407,9 @@ If called interactively, NODE is the node at point."
   "DEL" #'scroll-down-command
   "p" #'previous-line
   "n" #'next-line
-  "g" #'org-roam-folgezettel-refresh
+  ;; TODO 2024-11-14: I haven't figure out a way to shadow the
+  ;; `vtable-revert-command' binding in `vtable-map'
+  "r" #'org-roam-folgezettel-refresh
   "q" #'quit-window
   "x" #'kill-this-buffer
   "RET" #'org-roam-folgezettel-open-node
