@@ -211,8 +211,7 @@ returned data is for.  VTABLE is the vtable this getter is for."
      (or (org-roam-node-title node) "(No Title)"))
     ("Tags"
      (or (propertize
-          (string-remove-suffix "," (mapconcat (lambda (s) (concat s ","))
-                                               (org-roam-node-tags node)))
+          (mapconcat (lambda (s) (concat "#" s)) (org-roam-node-tags node))
           'face 'org-tag)
          ""))))
 
