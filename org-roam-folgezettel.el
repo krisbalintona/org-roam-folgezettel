@@ -92,6 +92,8 @@ the docstring of `org-roam-folgezettel--signature-normalize'.
 This is a useful operation for later index numbering operations for
 sorting; see ``org-roam-folgezettel--index-padded-parts' and
 `org-roam-folgezettel--index-lessp'."
+  ;; We split by "." because each portion of the index numbering is separeted by
+  ;; a "." from `org-roam-folgezettel--index-normalize'
   (string-split (org-roam-folgezettel--index-normalize index) "\\." t))
 
 (defun org-roam-folgezettel--index-padded-parts (index)
