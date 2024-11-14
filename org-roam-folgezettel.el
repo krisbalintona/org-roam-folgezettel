@@ -141,10 +141,6 @@ Handles mixed numeric and alphabetic components in index parts."
   "Retrieve the index string of NODE."
   (cdr (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))
 
-(defun org-roam-folgezettel-list--retrieve-tags (node)
-  "Retrieve the tags of NODE."
-  (cdr (assoc "ALLTAGS" (org-roam-node-properties node) #'string-equal)))
-
 ;;;;; Formatters
 (defun org-roam-folgezettel--index-formatter (index)
   "Propertize index INDEX.
@@ -214,7 +210,11 @@ returned data is for.  VTABLE is the vtable this getter is for."
     ("Title"
      (or (org-roam-node-title node) "(No Title)"))
     ("Tags"
-     (or (org-roam-folgezettel-list--retrieve-tags node) ""))))
+     (or (propertize
+          (string-remove-suffix "," (mapconcat (lambda (s) (concat s ","))
+                                               (org-roam-node-tags node)))
+          'face 'org-tag)
+         ""))))
 
 ;;; Commands
 ;;;###autoload
