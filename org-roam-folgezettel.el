@@ -202,10 +202,19 @@ returned data is for.  VTABLE is the vtable this getter is for."
 
 ;;; Commands
 ;;;###autoload
-(defun org-roam-folgezettel-list ()
-  "List org-roam nodes."
-  (interactive)
-  (let ((buf (get-buffer-create "*Node Listing*")))
+(defun org-roam-folgezettel-list (arg &optional buf-name)
+  "List org-roam nodes with vtable.el.
+If BUF-NAME is provided, that will be the name of the buffer
+created.  BUF-NAME defaults to \"*Node Listing*\".
+
+If a buffer with such a name exists already, open that buffer instead.
+
+If ARG is supplied (prefix-argument when called interactively), then
+create a new buffer whose name is unique (using
+`generate-new-buffer-name')."
+  (interactive (list current-prefix-arg "*Node Listing*"))
+  (when arg (setq buf-name (generate-new-buffer-name buf-name)))
+  (let ((buf (get-buffer-create buf-name)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
         (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
