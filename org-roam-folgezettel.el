@@ -57,10 +57,10 @@ Inspired by tablist.el's filter indicator.  Is added to
 ;;;; Index numbering sorter
 (defun org-roam-folgezettel--index-normalize (index)
   "Normalized INDEX into a signature whose parts are separated by \".\".
-
 This means that every transition from integer (positive or negative) to
 letter or letter to integer (positive or negative) warrants the
-insertion of a \".\" to delimit it.
+insertion of a \".\" to delimit it.  Additionally, every \"/\" is
+treated as a delimiter by replacing it with a \".\".
 
 This is a useful operation for later index numbering operations for
 sorting; see `org-roam-folgezettel--index-split' and
@@ -76,7 +76,7 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
    (rx (group (+? alpha)) (group (or digit "-"))) "\\1.\\2"
    (replace-regexp-in-string
     (rx (group (+? digit)) (group alpha)) "\\1.\\2"
-    (or index "0"))))
+    (replace-regexp-in-string "/" "." (or index "0")))))
 
 (defun org-roam-folgezettel--index-split (index)
   "Split INDEX into Luhmann-style parts.

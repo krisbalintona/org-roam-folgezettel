@@ -58,6 +58,12 @@ tests that should be run."
    (should (equal (org-roam-folgezettel--index-padded-parts i2)
                   "    1.    1.    a.    1"))
 
+   ;; With "/" as a section delimiter
+   (should (equal (org-roam-folgezettel--index-normalize "1/1/a/1")
+                  "1.1.a.1"))
+   (should (equal (org-roam-folgezettel--index-normalize "1/a/a/1")
+                  "1.a.a.1"))
+
    ;; Negative numbers
    (should (equal (org-roam-folgezettel--index-normalize "1.-1ab-30")
                   "1.-1.ab.-30"))
