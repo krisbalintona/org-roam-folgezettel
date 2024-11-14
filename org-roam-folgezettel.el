@@ -158,7 +158,7 @@ Meant to be used as the formatter for index numberings."
       ('color-last
        (if parts
            (concat (propertize (string-remove-suffix (car (last parts)) index) 'face 'shadow)
-                   (propertize (car (last parts)) 'face `(:weight heavy :foreground ,outline-color)))
+                   (propertize (car (last parts)) 'face `(:weight bold :foreground ,outline-color)))
          ""))
       ('color-full
        (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
