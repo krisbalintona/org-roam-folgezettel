@@ -45,6 +45,12 @@ non-nil if it should be included."
   :safe t
   :type '(repeat function))
 
+(defcustom org-roam-folgezettel-index-color-style 'color-last
+  "The coloring style for index numbering."
+  :type '(choice
+          (const :tag "Color only the last index numbering section" color-last)
+          (const :tag "Color the entire index number" color-full)))
+
 ;;;; Faces
 
 ;;;; Internal
@@ -145,12 +151,19 @@ Handles mixed numeric and alphabetic components in index parts."
 Meant to be used as the formatter for index numberings."
   (let* ((parts (org-roam-folgezettel--index-split index))
          (level (1- (length parts)))
-         (face
+         (outline-face
           (if (= 0 (+ 1 (% (1- level) 8)))
               'font-lock-warning-face
             (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))))
-    (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
-                              (propertize index 'face face))))
+    (pcase org-roam-folgezettel-index-color-style
+      ('color-last
+       (if parts
+           (concat (propertize (string-remove-suffix (car (last parts)) index) 'face 'shadow)
+                   (propertize (car (last parts)) 'face `(:weight bold :inherit ,outline-face)))
+         ""))
+      ('color-full
+       (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
+                                 (propertize index 'face outline-face))))))
 
 (defun org-roam-folgezettel--title-formatter (title)
   "Propertize TITLE.
