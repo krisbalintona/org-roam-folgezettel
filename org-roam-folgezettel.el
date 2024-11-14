@@ -436,7 +436,7 @@ If called interactively, NODE is the node at point."
   ;; `vtable-revert-command' binding in `vtable-map'
   "r" #'org-roam-folgezettel-refresh
   "q" #'quit-window
-  "x" #'kill-this-buffer
+  "x" #'kill-current-buffer
   "RET" #'org-roam-folgezettel-open-node
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
