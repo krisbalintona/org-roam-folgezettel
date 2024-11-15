@@ -402,7 +402,10 @@ links using `org-link-set-parameters'."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((buffer (find-file-noselect (org-roam-node-file node)))
          (buffer-was-open-p (get-buffer-window buffer)))
-    (with-current-buffer buffer (org-store-link nil :interactive))
+    (with-current-buffer buffer
+      (save-excursion
+        (goto-char (org-roam-node-point node))
+        (org-store-link nil :interactive)))
     ;; Kill the buffer if it was not initially open
     (unless buffer-was-open-p
       (kill-buffer buffer))))
