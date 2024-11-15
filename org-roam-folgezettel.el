@@ -394,20 +394,18 @@ If called interactively, prompts for a person to filter by."
 
 (defun org-roam-folgezettel-store-link (node)
   "Call `org-store-link' on NODE.
-If called interactively, NODE is the node at point."
+If called interactively, NODE is the node at point.
+
+If the user wishes to change the stored description of the org-roam
+node, then they should modify the `:store' value of \"id\" type org
+links using `org-link-set-parameters'."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (let* ((node-id (org-roam-node-id node))
-         (title (org-roam-node-title node)))
-    ;; Populate `org-store-link-plist'
-    (org-link-store-props
-     :type "id"
-     :description title
-     :link (concat "id:" node-id))
-    ;; Then add to `org-stored-links'
-    (push (list (plist-get org-store-link-plist :link)
-                (plist-get org-store-link-plist :description))
-          org-stored-links)
-    (message "Stored %s!" title)))
+  (let* ((buffer (find-file-noselect (org-roam-node-file node)))
+         (buffer-was-open-p (get-buffer-window buffer)))
+    (with-current-buffer buffer (org-store-link nil :interactive))
+    ;; Kill the buffer if it was not initially open
+    (unless buffer-was-open-p
+      (kill-buffer buffer))))
 
 (defun org-roam-folgezettel-move-down (nlines)
   "Move the current line down NLINES."
