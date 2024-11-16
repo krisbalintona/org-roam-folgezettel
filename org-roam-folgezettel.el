@@ -258,7 +258,8 @@ create a new buffer whose name is unique (using
            :separator-width 2)
           (setq-local buffer-read-only t)
           (toggle-truncate-lines 1))))
-    (display-buffer buf)))
+    (display-buffer buf)
+    buf))
 
 ;;;; Showing nodes
 (defun org-roam-folgezettel-open-node (node &optional display-action no-select)
