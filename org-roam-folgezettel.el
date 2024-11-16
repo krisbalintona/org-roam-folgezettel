@@ -256,8 +256,8 @@ create a new buffer whose name is unique (using
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2)
-          (setq-local buffer-read-only t)
-          (toggle-truncate-lines 1))))
+          (setq-local buffer-read-only t
+                      truncate-lines t))))
     (display-buffer buf)
     buf))
 
