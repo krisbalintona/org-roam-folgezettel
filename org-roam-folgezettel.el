@@ -27,7 +27,7 @@
 
 ;;; Code:
 (require 'vtable)
-(require 'org-roam-db)
+(require 'org-roam-node)
 
 ;;; Variables
 ;;;; Options
@@ -337,7 +337,7 @@ node at point."
   (interactive)
   (setq-local org-roam-folgezettel-filter-functions (butlast org-roam-folgezettel-filter-functions)
               org-roam-folgezettel-filter-indicator
-              (if-let ((pos (cl-position ?, (substring org-roam-folgezettel-filter-indicator 0 -1) :from-end t)))
+              (if-let* ((pos (cl-position ?, (substring org-roam-folgezettel-filter-indicator 0 -1) :from-end t)))
                   (substring org-roam-folgezettel-filter-indicator 0 pos)
                 org-roam-folgezettel-filter-indicator))
   (org-roam-folgezettel-refresh))
