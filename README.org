@@ -8,6 +8,28 @@
 + Filtering results
   - By subdirectory
 
+* Installation
+
+This project is currently not packaged in any official package repositories. Consequently, users will have to manually install this package.
+
+Users can clone this package locally into their machine then evaluate something like this:
+#+begin_src emacs-lisp
+  (use-package org-roam-folgezettel
+    :ensure t
+    :load-path "/home/USER/PATH/TO/PROJECT/DIRECTORY/")
+#+end_src
+Or, if using Emacs-30 or newer:
+#+begin_src emacs-lisp
+  (use-package org-roam-folgezetel
+    :vc ( :url "https://github.com/krisbalintona/org-roam-folgezettel.git"
+          :rev newest))
+#+end_src
+
+This project depends on the following third-party packages:
++ org-roam
++ org-roam-ql
+Until this project is packaged into an official repository such as MELPA, users will have to manually ensure these packages are installed prior to installing =org-roam-folgezettel=.
+
 * Roadmap
 
 + [-] Filtering
