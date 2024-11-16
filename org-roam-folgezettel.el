@@ -413,10 +413,8 @@ If called interactively, prompts for a person to filter by."
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
-  (let ((object (vtable-current-object)))
-    (widen)
-    (vtable-revert-command)
-    (vtable-goto-object object)))
+  (widen)
+  (vtable-revert-command))
 
 (defun org-roam-folgezettel-store-link (node)
   "Call `org-store-link' on NODE.
