@@ -28,6 +28,7 @@
 ;;; Code:
 (require 'vtable)
 (require 'org-roam-node)
+(require 'org-roam-ql)
 
 ;;; Variables
 ;;;; Options
@@ -36,14 +37,17 @@
   :group 'files
   :prefix "org-roam-folgezettel-")
 
-(defcustom org-roam-folgezettel-filter-functions (list)
-  "A list of functions that filter the current node listing.
-Each function in this list takes one argument: an org-roam node.  It
-should return nil if that node should be excluded from the listing, and
-non-nil if it should be included."
+(defcustom org-roam-folgezettel-filter-query nil
+  "A symbol representing a filter for the buffer.
+This symbol is of the form of SOURCE-OR-QUERY that org-roam-ql commands
+like `org-roam-ql-search'accepts.
+
+This is a buffer-local variable.  Users can set the default value of
+this variable to create a \"default\" filter; that is, a filter for
+every fresh `org-roam-folgezettel-mode' buffer."
   :local t
   :safe t
-  :type '(repeat function))
+  :type 'symbol)
 
 (defcustom org-roam-folgezettel-index-color-style 'color-last
   "The coloring style for index numbering."
@@ -110,6 +114,7 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
            (org-roam-folgezettel--index-split index))
    "."))
 
+
 (defun org-roam-folgezettel--index-lessp (index1 index2)
   "Compare INDEX1 and INDEX2 based on Luhmann-style numbering.
 Return t if INDEX1 should be sorted before INDEX2, nil otherwise.
@@ -136,6 +141,13 @@ Handles mixed numeric and alphabetic components in index parts."
                 (throw 'done (string< part1 part2)))))))
       ;; If we loop through all parts without difference, they are equal
       nil)))
+
+(defun org-roam-folgezettel--node-index-lessp (node1 node2)
+  "Compare the indices of NODE1 and NODE2.
+See the docstring of `org-roam-folgezettel--index-lessp'."
+  (let ((index1 (org-roam-folgezettel-list--retrieve-index node1))
+        (index2 (org-roam-folgezettel-list--retrieve-index node2)))
+    (org-roam-folgezettel--index-lessp index1 index2)))
 
 ;;;; Vtable
 ;;;;; Retrieving values
@@ -178,29 +190,36 @@ Meant to be used as the formatter for titles."
 Meant to be used as the formatter for tags."
   (propertize tags 'face 'org-tag))
 
-;;;;; Composition of vtable
-;; REVIEW 2024-11-12: For now, I opt for a recursive solution because I worry
-;; about performance: if we have many predicates, I do not want to iterate
-;; through all nodes for each predicate, then concatenate the results.  This is
-;; the best solution I can think of for now, since the list decreases in size
-;; for every predicate.  The drawback, however, is that I can basically only
-;; have "AND" filtering; there is no "OR" operator available with this method.
-(defun org-roam-folgezettel--filter-recursively (predicates list)
-  "Recursively filter LIST with each predicate in PREDICATES."
-  (if (null predicates)
-      list
-    (org-roam-folgezettel--filter-recursively (cdr predicates)
-                                              (cl-remove-if-not (car predicates) list))))
+;;;;; Org-roam-ql integration
+;;;;;; Sorting functions
+(org-roam-ql-register-sort-fn "index" #'org-roam-folgezettel--node-index-lessp)
 
+;;;;;; Node predicates
+(org-roam-ql-defpred 'subdir
+  "A predicate for the directory of a node.
+Returns non-nil when a node is within (at any level) the subdirectory."
+  (lambda (node) (expand-file-name (org-roam-node-file node)))
+  (lambda (path subdir) (string-prefix-p (expand-file-name subdir org-roam-directory) path)))
+
+(org-roam-ql-defpred 'person
+  "A predicate for the person associated with node.
+Returns non-nil when a node's \"ROAM_PERSON\" property matches the
+ provided argument (a string)."
+  (lambda (node) (cdr (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal)))
+  (lambda (person-value person-query)
+    (unless (stringp person-query) (error "Person argument should be a string!"))
+    (when (and person-value (not (string-empty-p person-value)))
+      (string-equal (string-trim person-value)
+                    (string-trim person-query)))))
+
+;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (let* ((nodes (org-roam-node-list))
-         (nodes-filtered
-          (org-roam-folgezettel--filter-recursively org-roam-folgezettel-filter-functions nodes)))
-    (cl-sort nodes-filtered #'org-roam-folgezettel--index-lessp
-             :key #'org-roam-folgezettel-list--retrieve-index)))
+  (let ((org-roam-folgezettel-filter-query
+         (or org-roam-folgezettel-filter-query (org-roam-node-list))))
+    (org-roam-ql-nodes org-roam-folgezettel-filter-query "index")))
 
 (defun org-roam-folgezettel-list--getter (node column vtable)
   "Getter for vtable objects.
@@ -263,7 +282,9 @@ create a new buffer whose name is unique (using
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2)
           (setq-local buffer-read-only t
-                      truncate-lines t))))
+                      truncate-lines t
+                      org-roam-folgezettel-filter-indicator
+                      (lambda () (prin1-to-string org-roam-folgezettel-filter-query))))))
     (display-buffer buf)
     buf))
 
@@ -339,14 +360,12 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-pop ()
-  "Undo/pop the latest filter operation."
+(defun org-roam-folgezettel-filter-query-modify ()
+  "Manually modify the filter for the current `org-roam-folgezettel' buffer."
   (interactive)
-  (setq-local org-roam-folgezettel-filter-functions (butlast org-roam-folgezettel-filter-functions)
-              org-roam-folgezettel-filter-indicator
-              (if-let* ((pos (cl-position ?, (substring org-roam-folgezettel-filter-indicator 0 -1) :from-end t)))
-                  (substring org-roam-folgezettel-filter-indicator 0 pos)
-                org-roam-folgezettel-filter-indicator))
+  (let* ((current-query-string (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
+         (new-query-string (read-string "New filter query: " current-query-string)))
+    (setq-local org-roam-folgezettel-filter-query (unless (string-empty-p new-query-string) (read new-query-string))))
   (org-roam-folgezettel-refresh))
 
 (defun org-roam-folgezettel-filter-directory (subdir)
@@ -360,14 +379,11 @@ If called interactively, SUBDIR is prompted for."
                                                           (directory-files org-roam-directory t "^[^.]" t)))))
                org-roam-folgezettel-mode)
   (let ((subdir (string-trim subdir "/" "/")))
-    (add-to-list 'org-roam-folgezettel-filter-functions
-                 `(lambda (node)
-                    ,(format "Filter nodes to ones only in the %s subdirectory." subdir)
-                    (string-prefix-p ,(expand-file-name subdir org-roam-directory)
-                                     (expand-file-name
-                                      (org-roam-node-file node)))))
-    (setq-local org-roam-folgezettel-filter-indicator
-                (concat org-roam-folgezettel-filter-indicator (format "subdir:%s," subdir)))
+    (setq-local org-roam-folgezettel-filter-query
+                (if org-roam-folgezettel-filter-query
+                    `(and ,org-roam-folgezettel-filter-query
+                          (subdir ,subdir))
+                  `(subdir ,subdir)))
     (message "Filtered nodes to the %s subdirectory" subdir)
     (org-roam-folgezettel-refresh)))
 
@@ -377,15 +393,11 @@ PERSON is the value of the \"ROAM_PERSON\" property.
 
 If called interactively, prompts for a person to filter by."
   (interactive (list (read-string "Filter by the following person: ")) org-roam-folgezettel-mode)
-  (add-to-list 'org-roam-folgezettel-filter-functions
-               `(lambda (node)
-                  ,(format "Filter nodes to ones only related to %s" person)
-                  (let ((prop-value (cdr (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal))))
-                    (when (and prop-value (not (string-empty-p prop-value)))
-                      (string-equal (string-trim (downcase ,person))
-                                    (string-trim (downcase prop-value)))))))
-  (setq-local org-roam-folgezettel-filter-indicator
-              (concat org-roam-folgezettel-filter-indicator (format "person:%s," person)))
+  (setq-local org-roam-folgezettel-filter-query
+              (if org-roam-folgezettel-filter-query
+                  `(and ,org-roam-folgezettel-filter-query
+                        (person ,person))
+                `(person ,person)))
   (message "Filtered nodes by the %s person" person)
   (org-roam-folgezettel-refresh))
 
@@ -465,7 +477,7 @@ If called interactively, NODE is the org-roam node at point."
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
-  "/ P" #'org-roam-folgezettel-filter-pop
+  "/ /" #'org-roam-folgezettel-filter-query-modify
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person)
 
@@ -476,9 +488,9 @@ If called interactively, NODE is the org-roam node at point."
   :after-hook (set (make-local-variable 'mode-line-misc-info)
                    (append
                     (list
-                     (list 'org-roam-folgezettel-filter-functions
-                           '(:eval (format " [%s]"
-                                           (string-remove-suffix "," (string-trim org-roam-folgezettel-filter-indicator)))))))))
+                     (list 'org-roam-folgezettel-filter-query
+                           '(:eval (format " [Query:%s]"
+                                           (string-remove-suffix "," (string-trim (funcall org-roam-folgezettel-filter-indicator))))))))))
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
