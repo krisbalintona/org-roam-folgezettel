@@ -219,7 +219,7 @@ returned data is for.  VTABLE is the vtable this getter is for."
 
 ;;; Commands
 ;;;###autoload
-(defun org-roam-folgezettel-list (arg &optional buf-name)
+(defun org-roam-folgezettel-list (&optional arg buf-name)
   "List org-roam nodes with vtable.el.
 If BUF-NAME is provided, that will be the name of the buffer
 created.  BUF-NAME defaults to \"*Node Listing*\".
@@ -441,7 +441,7 @@ If called interactively, NODE is the org-roam node at point."
   (if node
       (progn
         (org-roam-folgezettel-list :new-buffer)
-        (goto-char (point-min))
+        (goto-char (point-min))         ; Ensure point is in vtable
         (vtable-goto-object node)
         (message "Going to node titled \"%s\"..." (org-roam-node-title node)))
     (error "Org-roam node is not provided! If called interactively, point is not in a node")))
