@@ -435,6 +435,19 @@ provided."
           org-stored-links)
     (message "Stored link to %s!" description)))
 
+;;;###autoload
+(defun org-roam-folgezettel-show-node-in-list (node)
+  "Opens NODE in a new org-roam-folgezettel-mode buffer.
+If called interactively, NODE is the org-roam node at point."
+  (interactive (list (org-roam-node-at-point)) org-mode)
+  (if node
+      (progn
+        (org-roam-folgezettel-list :new-buffer)
+        (goto-char (point-min))
+        (vtable-goto-object node)
+        (message "Going to node titled \"%s\"..." (org-roam-node-title node)))
+    (error "Org-roam node is not provided! If called interactively, point is not in a node")))
+
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Mode map for `org-roam-folgezettel-mode'."
