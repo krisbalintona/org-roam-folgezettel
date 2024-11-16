@@ -229,8 +229,14 @@ If a buffer with such a name exists already, open that buffer instead.
 If ARG is supplied (prefix-argument when called interactively), then
 create a new buffer whose name is unique (using
 `generate-new-buffer-name')."
-  (interactive (list current-prefix-arg "*Node Listing*"))
-  (when arg (setq buf-name (generate-new-buffer-name buf-name)))
+  (interactive (list current-prefix-arg nil))
+  (let ((default-buf-name "*Node Listing*"))
+    (setq buf-name
+          (cond
+           (buf-name default-buf-name)
+           ((and arg (not buf-name))
+            (generate-new-buffer-name default-buf-name))
+           ((not buf-name) default-buf-name))))
   (let ((buf (get-buffer-create buf-name)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
