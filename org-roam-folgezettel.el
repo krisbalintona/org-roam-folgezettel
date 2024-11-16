@@ -382,6 +382,25 @@ If called interactively, prompts for a person to filter by."
   (message "Filtered nodes by the %s person" person)
   (org-roam-folgezettel-refresh))
 
+;;;; Moving nodes
+(defun org-roam-folgezettel-move-down (nlines)
+  "Move the current line down NLINES."
+  (interactive "p" org-roam-folgezettel-mode)
+  (org-roam-folgezettel-move-up (- nlines)))
+
+(defun org-roam-folgezettel-move-up (nlines)
+  "Move the current line up NLINES."
+  (interactive "p" org-roam-folgezettel-mode)
+  (let ((table (vtable-current-table))
+        (object (vtable-current-object))
+        (object-location (- (line-number-at-pos)
+                            (save-excursion
+                              (vtable-beginning-of-table)
+                              (line-number-at-pos)))))
+    (vtable-remove-object table object)
+    (vtable-insert-object table object (+ object-location (- nlines)))
+    (vtable-goto-object object)))
+
 ;;;; Other
 ;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
@@ -408,24 +427,6 @@ provided."
                 (plist-get org-store-link-plist :description))
           org-stored-links)
     (message "Stored link to %s!" description)))
-
-(defun org-roam-folgezettel-move-down (nlines)
-  "Move the current line down NLINES."
-  (interactive "p" org-roam-folgezettel-mode)
-  (org-roam-folgezettel-move-up (- nlines)))
-
-(defun org-roam-folgezettel-move-up (nlines)
-  "Move the current line up NLINES."
-  (interactive "p" org-roam-folgezettel-mode)
-  (let ((table (vtable-current-table))
-        (object (vtable-current-object))
-        (object-location (- (line-number-at-pos)
-                            (save-excursion
-                              (vtable-beginning-of-table)
-                              (line-number-at-pos)))))
-    (vtable-remove-object table object)
-    (vtable-insert-object table object (+ object-location (- nlines)))
-    (vtable-goto-object object)))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
