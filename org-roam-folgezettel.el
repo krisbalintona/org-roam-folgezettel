@@ -437,7 +437,7 @@ provided."
 
 ;;;###autoload
 (defun org-roam-folgezettel-show-node-in-list (node)
-  "Opens NODE in a new org-roam-folgezettel-mode buffer.
+  "Opens NODE in a new `org-roam-folgezettel-mode' buffer.
 If called interactively, NODE is the org-roam node at point."
   (interactive (list (org-roam-node-at-point)) org-mode)
   (if node
