@@ -159,6 +159,14 @@ Additionally,if the index string is empty, return nil."
     (when (and (cdr values) (not (string-empty-p (cdr values))))
       (cdr values))))
 
+(defun org-roam-folgezettel-list--retrieve-person (node)
+  "Retrieve the person of NODE.
+Returns the trimmed value of the \"ROAM_PERSON\" property.
+Additionally,if the index string is empty, return nil."
+  (let ((values (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal)))
+    (when (and (cdr values) (not (string-empty-p (cdr values))))
+      (cdr values))))
+
 ;;;;; Formatters
 (defun org-roam-folgezettel--index-formatter (index)
   "Propertize index INDEX.
@@ -209,11 +217,11 @@ Returns non-nil when a node is within (at any level) the subdirectory."
   "A predicate for the person associated with node.
 Returns non-nil when a node's \"ROAM_PERSON\" property matches the
  provided argument (a string)."
-  (lambda (node) (cdr (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal)))
+  #'org-roam-folgezettel-list--retrieve-person
   (lambda (person-value person-query)
     (unless (stringp person-query) (error "Person argument should be a string!"))
     (when (and person-value (not (string-empty-p person-value)))
-      (string-equal (string-trim person-value)
+      (string-equal person-value
                     (string-trim person-query)))))
 
 ;;;;; Composition of vtable
