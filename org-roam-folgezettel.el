@@ -428,6 +428,33 @@ If called interactively, prompts for a person to filter by."
   (org-roam-folgezettel-refresh))
 
 ;;;; Movement via index numbers
+(defun org-roam-folgezettel-upward (&optional dist)
+  "Move point to DIST parents upward in the vtable.
+DIST is an integer representing the number of parents to move upwards
+by.  If DIST is negative, move downward."
+  (interactive "p")
+  (setq dist (or dist 1))
+  (if (<= 0 dist)
+      (let* ((node (vtable-current-object))
+             (index (org-roam-folgezettel-list--retrieve-index node))
+             (index-parts (org-roam-folgezettel--index-split index))
+             (parent-index
+              ;; TODO 2024-11-17: For now, we assume the only delimiter is a period
+              ;; (".") and manually remove it.  Is there a more versatile,
+              ;; assumption-less way to accomplish this?
+              (string-remove-suffix "." (string-remove-suffix
+                                         (mapconcat #'identity (last index-parts (min (1- (length index-parts)) dist)))
+                                         index)))
+             (parent-node (cl-find parent-index
+                                   (vtable-objects (vtable-current-table))
+                                   :key #'org-roam-folgezettel-list--retrieve-index
+                                   :test #'string-equal)))
+        (or (vtable-goto-object parent-node)
+            (message "No parent visible with index numbering %s" parent-index))
+        (when (< (1- (length index-parts)) dist)
+          (message "Cannot go that high; going to top-level parent")))
+    (org-roam-folgezettel-downward dist)))
+
 (defun org-roam-folgezettel-forward-sibling (&optional dist)
   "Move point to DIST visible siblings forward or backward in the vtable.
 DIST is an integer representing the number of siblings to move across.
@@ -451,7 +478,8 @@ If DIST is negative, move backward."
 
 (defun org-roam-folgezettel-backward-sibling (&optional dist)
   "Move point to DIST siblings backward from the vtable object at point.
-DIST is an integer representing the number of siblings to move across."
+DIST is an integer representing the number of siblings to move across.
+If DIST is negative, move forward."
   (interactive "p" org-roam-folgezettel-mode)
   (org-roam-folgezettel-forward-sibling (- (or dist 1))))
 
@@ -528,6 +556,7 @@ If called interactively, NODE is the org-roam node at point."
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
+  "M-u" #'org-roam-folgezettel-upward
   "M-n" #'org-roam-folgezettel-forward-sibling
   "M-p" #'org-roam-folgezettel-backward-sibling
   "M-<up>" #'org-roam-folgezettel-move-up
