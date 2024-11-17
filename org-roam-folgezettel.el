@@ -29,6 +29,7 @@
 (require 'vtable)
 (require 'org-roam-node)
 (require 'org-roam-ql)
+(require 'seq)
 
 ;;; Variables
 ;;;; Options
@@ -224,6 +225,19 @@ Returns non-nil when a node's \"ROAM_PERSON\" property matches the
       (string-equal person-value
                     (string-trim person-query)))))
 
+(org-roam-ql-defpred 'siblings
+  "A predicate for the siblings of an index numbering.
+A sibling of a node is one that, speaking from in folgezettel terms, is
+a child of the same parent of that node."
+  #'org-roam-folgezettel-list--retrieve-index
+  (lambda (index-value index-query)
+    (unless (stringp index-query) (error "Index argument should be a string!"))
+    (let* ((index-value-parts
+            (org-roam-folgezettel--index-split index-value))
+           (index-query-parts
+            (org-roam-folgezettel--index-split index-query)))
+      (equal (butlast index-value-parts) (butlast index-query-parts)))))
+
 ;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
@@ -413,6 +427,34 @@ If called interactively, prompts for a person to filter by."
   (message "Filtered nodes by the %s person" person)
   (org-roam-folgezettel-refresh))
 
+;;;; Movement via index numbers
+(defun org-roam-folgezettel-forward-sibling (&optional dist)
+  "Move point to DIST visible siblings forward or backward in the vtable.
+DIST is an integer representing the number of siblings to move across.
+If DIST is negative, move backward."
+  (interactive "p")
+  (let* ((node (vtable-current-object))
+         (index (org-roam-folgezettel-list--retrieve-index node))
+         ;; We want to traverse siblings that are present in the current vtable
+         (siblings (org-roam-ql-nodes `(and (nodes-list ,(vtable-objects (vtable-current-table)))
+                                            (siblings ,index))
+                                      "index"))
+         ;; Sort siblings based on the index order
+         (sorted-siblings (sort siblings #'org-roam-folgezettel--node-index-lessp))
+         ;; Find the current node in the sorted list
+         (current-pos (cl-position node sorted-siblings :test #'eq))
+         ;; Calculate the target position
+         (target-pos (+ current-pos (or dist 1))))
+    (if (or (< target-pos 0) (>= target-pos (length sorted-siblings)))
+        (message "No sibling at target position")
+      (vtable-goto-object (nth target-pos sorted-siblings)))))
+
+(defun org-roam-folgezettel-backward-sibling (&optional dist)
+  "Move point to DIST siblings backward from the vtable object at point.
+DIST is an integer representing the number of siblings to move across."
+  (interactive "p" org-roam-folgezettel-mode)
+  (org-roam-folgezettel-forward-sibling (- (or dist 1))))
+
 ;;;; Moving nodes
 (defun org-roam-folgezettel-move-down (nlines)
   "Move the current line down NLINES."
@@ -486,6 +528,8 @@ If called interactively, NODE is the org-roam node at point."
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
+  "M-n" #'org-roam-folgezettel-forward-sibling
+  "M-p" #'org-roam-folgezettel-backward-sibling
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
