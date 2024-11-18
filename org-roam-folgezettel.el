@@ -217,7 +217,7 @@ Returns non-nil when a node is within (at any level) the subdirectory."
 (org-roam-ql-defpred 'person
   "A predicate for the person associated with node.
 Returns non-nil when a node's \"ROAM_PERSON\" property matches the
- provided argument (a string)."
+provided argument (a string)."
   #'org-roam-folgezettel-list--retrieve-person
   (lambda (person-value person-query)
     (unless (stringp person-query) (error "Person argument should be a string!"))
@@ -266,8 +266,8 @@ returned data is for.  VTABLE is the vtable this getter is for."
 ;;;###autoload
 (defun org-roam-folgezettel-list (&optional arg buf-name)
   "List org-roam nodes with vtable.el.
-If BUF-NAME is provided, that will be the name of the buffer
-created.  BUF-NAME defaults to \"*Node Listing*\".
+If BUF-NAME is provided, that will be the name of the buffer created.
+BUF-NAME defaults to \"*Node Listing*\".
 
 If a buffer with such a name exists already, open that buffer instead.
 
@@ -427,6 +427,20 @@ If called interactively, prompts for a person to filter by."
   (message "Filtered nodes by the %s person" person)
   (org-roam-folgezettel-refresh))
 
+(defun org-roam-folgezettel-filter-tags (tags)
+  "Filter the current node listing by TAGS.
+If called interactively, prompts for the tags to filter by."
+  (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
+                       (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions)))))
+               org-roam-folgezettel-mode)
+  (setq-local org-roam-folgezettel-filter-query
+              (if org-roam-folgezettel-filter-query
+                  `(and ,org-roam-folgezettel-filter-query
+                        (tags ,tags))
+                `(tags ,tags)))
+  (message "Filtered nodes by the tags: %s" tags)
+  (org-roam-folgezettel-refresh))
+
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
   "Move point to DIST parents upward in the vtable.
@@ -565,7 +579,8 @@ If called interactively, NODE is the org-roam node at point."
   "w" #'org-roam-folgezettel-store-link
   "/ /" #'org-roam-folgezettel-filter-query-modify
   "/ d" #'org-roam-folgezettel-filter-directory
-  "/ p" #'org-roam-folgezettel-filter-person)
+  "/ p" #'org-roam-folgezettel-filter-person
+  "/ t" #'org-roam-folgezettel-filter-tags)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
