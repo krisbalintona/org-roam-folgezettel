@@ -508,6 +508,7 @@ If DIST is negative, move forward."
   "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
   (widen)
+  (save-excursion (goto-char (point-min)))
   (vtable-revert-command))
 
 (defun org-roam-folgezettel-store-link (node)
