@@ -546,14 +546,13 @@ provided."
 (defun org-roam-folgezettel-show-node-in-list (node)
   "Opens NODE in a new `org-roam-folgezettel-mode' buffer.
 If called interactively, NODE is the org-roam node at point."
-  (interactive (list (org-roam-node-at-point)) org-mode)
-  (if node
-      (progn
-        (org-roam-folgezettel-list :new-buffer)
-        (goto-char (point-min))         ; Ensure point is in vtable
-        (vtable-goto-object node)
-        (message "Going to node titled \"%s\"..." (org-roam-node-title node)))
-    (error "Org-roam node is not provided! If called interactively, point is not in a node")))
+  (interactive (list (org-roam-node-at-point :assert)) org-mode)
+  (progn
+    (let ((buf (org-roam-folgezettel-list :new-buffer)))
+      (switch-to-buffer buf)
+      (goto-char (point-min))         ; Ensure point is in vtable
+      (vtable-goto-object node)
+      (message "Going to node titled \"%s\"..." (org-roam-node-title node)))))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
