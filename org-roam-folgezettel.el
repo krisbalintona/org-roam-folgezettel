@@ -509,6 +509,23 @@ by.  If DIST is negative, move downward."
           (message "Cannot go that high; going to top-level parent")))
     (org-roam-folgezettel-downward dist)))
 
+(defun org-roam-folgezettel-downward (&optional dist)
+  "Move point to DIST parents downward in the vtable.
+DIST is an integer representing the number of parents to move downwards
+by.  If DIST is negative, move upward."
+  (interactive "p")
+  (setq dist (or dist 1))
+  (if (<= 0 dist)
+      (let* ((node (vtable-current-object))
+             (index (org-roam-folgezettel-list--retrieve-index node))
+             ;; We want to traverse children that are present in the current
+             ;; vtable
+             (children (org-roam-ql-nodes `(and (nodes-list ,(vtable-objects (vtable-current-table)))
+                                                (descendants ,index))
+                                          "index")))
+        (vtable-goto-object (nth (1- dist) children)))
+    (org-roam-folgezettel-upward dist)))
+
 (defun org-roam-folgezettel-forward-sibling (&optional dist)
   "Move point to DIST visible siblings forward or backward in the vtable.
 DIST is an integer representing the number of siblings to move across.
@@ -611,6 +628,7 @@ If called interactively, NODE is the org-roam node at point."
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
   "M-u" #'org-roam-folgezettel-upward
+  "M-d" #'org-roam-folgezettel-downward
   "M-n" #'org-roam-folgezettel-forward-sibling
   "M-p" #'org-roam-folgezettel-backward-sibling
   "M-<up>" #'org-roam-folgezettel-move-up
