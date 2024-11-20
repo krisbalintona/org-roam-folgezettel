@@ -214,6 +214,19 @@ Returns non-nil when a node is within (at any level) the subdirectory."
   (lambda (node) (expand-file-name (org-roam-node-file node)))
   (lambda (path subdir) (string-prefix-p (expand-file-name subdir org-roam-directory) path)))
 
+(org-roam-ql-defpred 'box
+  "A predicate for the slip-box of a node.
+Returns non-nil when a node's \"ROAM_BOX\" property matches the provided
+argument (a string)."
+  (lambda (node)
+    (let ((values (assoc "ROAM_BOX" (org-roam-node-properties node) #'string-equal)))
+      (when (and (cdr values) (not (string-empty-p (cdr values))))
+        (cdr values))))
+  (lambda (box-value box-query)
+    (when (and box-value (not (string-empty-p box-value)))
+      (string-equal box-value
+                    (string-trim box-query)))))
+
 (org-roam-ql-defpred 'person
   "A predicate for the person associated with node.
 Returns non-nil when a node's \"ROAM_PERSON\" property matches the
@@ -237,6 +250,33 @@ a child of the same parent of that node."
            (index-query-parts
             (org-roam-folgezettel--index-split index-query)))
       (equal (butlast index-value-parts) (butlast index-query-parts)))))
+
+(org-roam-ql-defpred 'children
+  "A predicate for the children of an index numbering.
+A child of a node is one that, speaking from in folgezettel terms, is
+one nesting level below that node."
+  #'org-roam-folgezettel-list--retrieve-index
+  (lambda (index-value index-query)
+    (unless (stringp index-query) (error "Index argument should be a string!"))
+    (let* ((index-value-parts
+            (org-roam-folgezettel--index-split index-value))
+           (index-query-parts
+            (org-roam-folgezettel--index-split index-query)))
+      (and (string-prefix-p index-query index-value)
+           (= (1+ (length index-value-parts)) (length index-query-parts))))))
+
+(org-roam-ql-defpred 'descendants
+  "A predicate for the descendants of an index numbering.
+A descendant of a node is one that, speaking from in folgezettel terms,
+is a child of that node or a child of one of the children of that node.
+
+The returned nodes list does not include the node from which all other
+returned nodes are descended from."
+  #'org-roam-folgezettel-list--retrieve-index
+  (lambda (index-value index-query)
+    (unless (stringp index-query) (error "Index argument should be a string!"))
+    (and (string-prefix-p index-query index-value)
+         (not (string-equal index-query index-value)))))
 
 ;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
