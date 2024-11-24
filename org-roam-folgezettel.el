@@ -205,7 +205,7 @@ node, with the last string representing the title of the node."
           (if (string= title "(No title)")
               (propertize title 'face 'shadow)
             title))
-    (string-join (append (mapcar (lambda (s) (propertize s 'face 'shadow)) olp)
+    (string-join (append (mapcar (lambda (s) (propertize s 'face '(:weight light :inherit shadow))) olp)
                          (list title))
                  " > ")))
 
