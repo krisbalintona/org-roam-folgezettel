@@ -208,6 +208,19 @@ Meant to be used as the formatter for tags."
   (propertize tags 'face 'org-tag))
 
 ;;;;; Org-roam-ql integration
+;;;;;; Helper functions
+(defun org-roam-folgezettel--index-prefix-p (index1 index2)
+  "Check if the parts of INDEX1 are the prefix of the parts of INDEX2.
+For example, this function returns non-nil when INDEX1 is \"1.1\" and
+INDEX2 is \"1.1a\", but returns nil when INDEX1 is \"1.1\" and INDEX2 is
+\"10.1a\"."
+  (let ((index1-parts
+         (org-roam-folgezettel--index-split index1))
+        (index2-parts
+         (org-roam-folgezettel--index-split index2)))
+    (and (<= (length index1-parts) (length index2-parts))
+         (cl-every #'equal index1-parts (cl-subseq index2-parts 0 (length index1-parts))))))
+
 ;;;;;; Sorting functions
 (org-roam-ql-register-sort-fn "index" #'org-roam-folgezettel--node-index-lessp)
 
@@ -265,7 +278,7 @@ returned nodes are descended from."
   #'org-roam-folgezettel-list--retrieve-index
   (lambda (index-value index-query)
     (unless (stringp index-query) (error "Index argument should be a string!"))
-    (and (string-prefix-p index-query index-value)
+    (and (org-roam-folgezettel--index-prefix-p index-query index-value)
          (not (string-equal index-query index-value)))))
 
 (org-roam-ql-defpred 'children
@@ -275,7 +288,7 @@ one nesting level below that node."
   #'org-roam-folgezettel-list--retrieve-index
   (lambda (index-value index-query)
     (unless (stringp index-query) (error "Index argument should be a string!"))
-    (and (string-prefix-p index-query index-value)
+    (and (org-roam-folgezettel--index-prefix-p index-query index-value)
          (= (length (org-roam-folgezettel--index-split index-value))
             (1+ (length (org-roam-folgezettel--index-split index-query)))))))
 
@@ -288,17 +301,14 @@ has children indexed as 1.1, 1.2, and 1.3, the first child is 1.1."
   #'org-roam-folgezettel-list--retrieve-index
   (lambda (index-value index-query)
     (unless (stringp index-query) (error "Index argument should be a string!"))
-    (when (and (string-prefix-p index-query index-value)
+    (when (and (org-roam-folgezettel--index-prefix-p index-query index-value)
                (not (string-equal index-query index-value)))
-      (let* ((suffix (string-remove-prefix index-query index-value))
-             (suffix-parts (org-roam-folgezettel--index-split suffix)))
-        ;; TODO 2024-11-23: We assume that the first child is either an index
-        ;; numbering that ends with a 1 or a.  This is incompatible with index
-        ;; numbering systems which use a different value (e.g. negative
-        ;; numbers).
-        (not (cl-member-if-not
-              (lambda (part) (or (string= part "1") (string= part "a")))
-              suffix-parts))))))
+      ;; TODO 2024-11-23: We assume that the first child is either an index
+      ;; numbering that ends with a 1 or a.  This is incompatible with index
+      ;; numbering systems which use a different value (e.g. negative numbers).
+      (not (cl-member-if-not
+            (lambda (part) (or (string= part "1") (string= part "a")))
+            (org-roam-folgezettel--index-split (string-remove-prefix index-query index-value)))))))
 
 ;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
