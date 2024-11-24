@@ -48,7 +48,7 @@ this variable to create a \"default\" filter; that is, a filter for
 every fresh `org-roam-folgezettel-mode' buffer."
   :local t
   :safe t
-  :type 'symbol)
+  :type '(restricted-sexp :match-alternatives (listp)))
 
 (defcustom org-roam-folgezettel-index-color-style 'color-last
   "The coloring style for index numbering."
