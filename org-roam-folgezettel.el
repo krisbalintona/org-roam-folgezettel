@@ -453,7 +453,19 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-query-edit (new-query new-buffer)
+(defun org-roam-folgezettel-filter--modify (query new-buffer-p)
+  "Modify the filter for the current buffer and update listing.
+If QUERY is non-nil, use that string as the new query.
+
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
+non-nil when called with any number of universal arguments."
+  (if (and current-prefix-arg (listp current-prefix-arg))
+      (org-roam-folgezettel-list new-buffer-p nil query)
+    (setq-local org-roam-folgezettel-filter-query query)
+    (org-roam-folgezettel-refresh)))
+
+(defun org-roam-folgezettel-filter-query-edit (new-query new-buffer-p)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
 If NEW-QUERY is non-nil, use that string as the new query.
 
@@ -464,11 +476,7 @@ non-nil when called with any number of universal arguments."
                                   (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let* ((new-query (read new-query)))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))))
+  (org-roam-folgezettel-filter--modify (read new-query) new-buffer-p))
 
 (defun org-roam-folgezettel-filter-directory (subdir new-buffer-p)
   "Filter the current buffer's node listing to SUBDIR.
@@ -490,10 +498,7 @@ non-nil when called with any number of universal arguments."
                        `(and ,org-roam-folgezettel-filter-query
                              (subdir ,subdir))
                      `(subdir ,subdir))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered nodes to the %s subdirectory" subdir)))
 
 (defun org-roam-folgezettel-filter-person (person new-buffer-p)
@@ -512,10 +517,7 @@ non-nil when called with any number of universal arguments."
                        `(and ,org-roam-folgezettel-filter-query
                              (person ,person))
                      `(person ,person))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered nodes by the %s person" person)))
 
 (defun org-roam-folgezettel-filter-title (regexp new-buffer-p)
@@ -532,10 +534,7 @@ non-nil when called with any number of universal arguments."
                        `(and ,org-roam-folgezettel-filter-query
                              (title ,regexp))
                      `(title ,regexp))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered node titles by regexp: %s" regexp)))
 
 (defun org-roam-folgezettel-filter-tags (tags new-buffer-p)
@@ -553,10 +552,7 @@ non-nil when called with any number of universal arguments."
                        `(and ,org-roam-folgezettel-filter-query
                              (tags ,tags))
                      `(tags ,tags))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered nodes by the tags: %s" tags)))
 
 (defun org-roam-folgezettel-filter-children (node new-buffer-p)
@@ -578,10 +574,7 @@ non-nil when called with any number of universal arguments."
                                   (children ,index)))
                       `(or (id ,id)
                            (children ,index)))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered nodes to the children of %s" (org-roam-node-formatted node))))
 
 (defun org-roam-folgezettel-filter-descendants (node new-buffer-p)
@@ -603,10 +596,7 @@ non-nil when called with any number of universal arguments."
                                   (descendants ,index)))
                       `(or (id ,id)
                            (descendants ,index)))))
-    (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer-p nil new-query)
-      (setq-local org-roam-folgezettel-filter-query new-query)
-      (org-roam-folgezettel-refresh))
+    (org-roam-folgezettel-filter--modify new-query new-buffer-p)
     (message "Filtered nodes to the descendants of %s" (org-roam-node-formatted node))))
 
 ;;;; Movement via index numbers
