@@ -448,11 +448,12 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-query-modify ()
-  "Manually modify the filter for the current `org-roam-folgezettel' buffer."
+(defun org-roam-folgezettel-filter-query-modify (new-query)
+  "Manually modify the filter for the current `org-roam-folgezettel' buffer.
+In lisp, if NEW-QUERY is provided, use that string as the new query."
   (interactive)
   (let* ((current-query-string (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
-         (new-query-string (read-string "New filter query: " current-query-string)))
+         (new-query-string (or new-query (read-string "New filter query: " current-query-string))))
     (setq-local org-roam-folgezettel-filter-query (unless (string-empty-p new-query-string) (read new-query-string))))
   (org-roam-folgezettel-refresh))
 
