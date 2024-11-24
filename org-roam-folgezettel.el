@@ -564,16 +564,14 @@ If DIST is negative, move backward."
          (siblings (org-roam-ql-nodes `(and (nodes-list ,(vtable-objects (vtable-current-table)))
                                             (siblings ,index))
                                       "index"))
-         ;; Sort siblings based on the index order
-         (sorted-siblings (sort siblings #'org-roam-folgezettel--node-index-lessp))
          ;; Find the current node in the sorted list
-         (current-pos (cl-position node sorted-siblings :test #'eq))
+         (current-pos (cl-position node siblings :test #'eq))
          ;; Calculate the target position
          (target-pos (+ current-pos (or dist 1)))
          (orig-pt (point)))
-    (if (or (< target-pos 0) (>= target-pos (length sorted-siblings)))
+    (if (or (< target-pos 0) (>= target-pos (length siblings)))
         (message "No sibling at target position")
-      (vtable-goto-object (nth target-pos sorted-siblings))
+      (vtable-goto-object (nth target-pos siblings))
       (push-mark orig-pt t))))
 
 (defun org-roam-folgezettel-backward-sibling (&optional dist)
