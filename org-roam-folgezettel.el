@@ -458,7 +458,7 @@ node at point."
 If NEW-QUERY is non-nil, use that string as the new query.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (read-string "New filter query: "
                                   (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
@@ -466,18 +466,18 @@ non-nil when called with any number of universal arguments."
                org-roam-folgezettel-mode)
   (let* ((new-query (read new-query)))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))))
 
-(defun org-roam-folgezettel-filter-directory (subdir new-buffer)
+(defun org-roam-folgezettel-filter-directory (subdir new-buffer-p)
   "Filter the current buffer's node listing to SUBDIR.
 SUBDIR is a subdirectory of the `org-roam-directory'.
 
 If called interactively, SUBDIR is prompted for.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (completing-read "Subdirectory: "
                                       (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
@@ -491,19 +491,19 @@ non-nil when called with any number of universal arguments."
                              (subdir ,subdir))
                      `(subdir ,subdir))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes to the %s subdirectory" subdir)))
 
-(defun org-roam-folgezettel-filter-person (person new-buffer)
+(defun org-roam-folgezettel-filter-person (person new-buffer-p)
   "Filter the current node listing by PERSON.
 PERSON is the value of the \"ROAM_PERSON\" property.
 
 If called interactively, prompts for a person to filter by.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (read-string "Filter by the following person: ")
                      current-prefix-arg)
@@ -513,17 +513,17 @@ non-nil when called with any number of universal arguments."
                              (person ,person))
                      `(person ,person))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes by the %s person" person)))
 
-(defun org-roam-folgezettel-filter-title (regexp new-buffer)
+(defun org-roam-folgezettel-filter-title (regexp new-buffer-p)
   "Filter the current node titles by REGEXP.
 If called interactively, prompts for the regexp to match node titles by.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (read-regexp "Regexp to filter titles by: ")
                      current-prefix-arg)
@@ -533,17 +533,17 @@ non-nil when called with any number of universal arguments."
                              (title ,regexp))
                      `(title ,regexp))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered node titles by regexp: %s" regexp)))
 
-(defun org-roam-folgezettel-filter-tags (tags new-buffer)
+(defun org-roam-folgezettel-filter-tags (tags new-buffer-p)
   "Filter the current node listing by TAGS.
 If called interactively, prompts for the tags to filter by.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
                        (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
@@ -554,19 +554,19 @@ non-nil when called with any number of universal arguments."
                              (tags ,tags))
                      `(tags ,tags))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes by the tags: %s" tags)))
 
-(defun org-roam-folgezettel-filter-children (node new-buffer)
+(defun org-roam-folgezettel-filter-children (node new-buffer-p)
   "Filter the current node listing to the children of NODE.
 The filtered results also include NODE.
 
 If called interactively, NODE is the vtable object at point.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -579,19 +579,19 @@ non-nil when called with any number of universal arguments."
                       `(or (id ,id)
                            (children ,index)))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes to the children of %s" (org-roam-node-formatted node))))
 
-(defun org-roam-folgezettel-filter-descendants (node new-buffer)
+(defun org-roam-folgezettel-filter-descendants (node new-buffer-p)
   "Filter the current node listing to the descendants of NODE.
 The filtered results also include NODE.
 
 If called interactively, NODE is the vtable object at point.
 
 If NEW-BUFER is non-nil, then apply this filter to a new
-`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER-P is
 non-nil when called with any number of universal arguments."
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -604,7 +604,7 @@ non-nil when called with any number of universal arguments."
                       `(or (id ,id)
                            (descendants ,index)))))
     (if (and current-prefix-arg (listp current-prefix-arg))
-        (org-roam-folgezettel-list new-buffer nil new-query)
+        (org-roam-folgezettel-list new-buffer-p nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes to the descendants of %s" (org-roam-node-formatted node))))
