@@ -349,7 +349,10 @@ When called interactively, BUF-NAME is the `current-prefix-arg'.
 
 A second optional argument is available: FILTER-QUERY.  If FILTER-QUERY
 is supplied, use that form (see `org-roam-ql-nodes') to filter the nodes
-list."
+list.
+
+See the bindings in `org-roam-folgezettel-mode-map' below:
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list current-prefix-arg nil))
   (setq buf-name
         (cond
@@ -498,7 +501,11 @@ If NEW-QUERY is non-nil, use that string as the new query.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "New filter query: "
                                   (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
                      current-prefix-arg)
@@ -516,7 +523,11 @@ If called interactively, SUBDIR is prompted for.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (completing-read "Subdirectory: "
                                       (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
                                               (seq-filter #'file-directory-p
@@ -542,7 +553,11 @@ If called interactively, prompts for a person to filter by.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "Filter by the following person: ")
                      current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -562,7 +577,11 @@ If called interactively, prompts for the regexp to match node titles by.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-regexp "Regexp to filter titles by: ")
                      current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -582,7 +601,11 @@ If called interactively, prompts for the tags to filter by.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
                        (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
                      current-prefix-arg)
@@ -605,7 +628,11 @@ If called interactively, NODE is the vtable object at point.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
@@ -630,7 +657,11 @@ If called interactively, NODE is the vtable object at point.
 
 If NEW-BUFFER-P is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer named according to the filter
-applied."
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
@@ -651,7 +682,11 @@ applied."
 (defun org-roam-folgezettel-upward (&optional dist)
   "Move point to DIST parents upward in the vtable.
 DIST is an integer representing the number of parents to move upwards
-by.  If DIST is negative, move downward."
+by.  If DIST is negative, move downward.
+
+Other movement commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (setq dist (or dist 1))
   (if (<= 0 dist)
@@ -680,7 +715,11 @@ by.  If DIST is negative, move downward."
 (defun org-roam-folgezettel-downward (&optional dist)
   "Move point to DIST parents downward in the vtable.
 DIST is an integer representing the number of parents to move downwards
-by.  If DIST is negative, move upward."
+by.  If DIST is negative, move upward.
+
+Other movement commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (setq dist (or dist 1))
   (if (<= 0 dist)
@@ -700,7 +739,11 @@ by.  If DIST is negative, move upward."
 (defun org-roam-folgezettel-forward-sibling (&optional dist)
   "Move point to DIST visible siblings forward or backward in the vtable.
 DIST is an integer representing the number of siblings to move across.
-If DIST is negative, move backward."
+If DIST is negative, move backward.
+
+Other movement commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (let* ((node (vtable-current-object))
          (index (org-roam-folgezettel-list--retrieve-index node))
@@ -721,7 +764,11 @@ If DIST is negative, move backward."
 (defun org-roam-folgezettel-backward-sibling (&optional dist)
   "Move point to DIST siblings backward from the vtable object at point.
 DIST is an integer representing the number of siblings to move across.
-If DIST is negative, move forward."
+If DIST is negative, move forward.
+
+Other movement commands are available in
+`org-roam-folgezettel-mode-map':
+\\{org-roam-folgezettel-mode-map}"
   (interactive "p" org-roam-folgezettel-mode)
   (org-roam-folgezettel-forward-sibling (- (or dist 1))))
 
