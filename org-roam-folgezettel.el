@@ -325,7 +325,7 @@ returned data is for.  VTABLE is the vtable this getter is for."
 
 ;;; Commands
 ;;;###autoload
-(defun org-roam-folgezettel-list (&optional arg buf-name)
+(defun org-roam-folgezettel-list (&optional arg buf-name filter-query)
   "List org-roam nodes with vtable.el.
 If BUF-NAME is provided, that will be the name of the buffer created.
 BUF-NAME defaults to \"*Node Listing*\".
@@ -336,9 +336,8 @@ If ARG is supplied (prefix-argument when called interactively), then
 create a new buffer whose name is unique (using
 `generate-new-buffer-name').
 
-Finally, this function can be called within a let form that sets the
-value of `org-roam-folgezettel-filter-query' in order to set the
-buffer-local value of that variable and use that value."
+If FILTER-QUERY is supplied, use that form (see `org-roam-ql-nodes') to
+filter the nodes list."
   (interactive (list current-prefix-arg nil))
   (when (and buf-name (not (stringp buf-name)))
     (error "BUF-NAME should be a string!"))
@@ -354,6 +353,12 @@ buffer-local value of that variable and use that value."
       (let ((inhibit-read-only t))
         (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
           (org-roam-folgezettel-mode)
+          (setq-local buffer-read-only t
+                      truncate-lines t
+                      org-roam-folgezettel-filter-query
+                      (or filter-query org-roam-folgezettel-filter-query)
+                      org-roam-folgezettel-filter-indicator
+                      (lambda () (prin1-to-string org-roam-folgezettel-filter-query)))
           (make-vtable
            :columns '(( :name "Index"
                         :align left
@@ -373,17 +378,7 @@ buffer-local value of that variable and use that value."
                         :formatter org-roam-folgezettel--tags-formatter))
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
-           :separator-width 2)
-          (setq-local buffer-read-only t
-                      truncate-lines t
-                      ;; We explicitly set `org-roam-folgezettel-filter-query'
-                      ;; to the current value of
-                      ;; `org-roam-folgezettel-filter-query' because this
-                      ;; command can be called within a let that sets
-                      ;; `org-roam-folgezettel-filter-query'.
-                      org-roam-folgezettel-filter-query org-roam-folgezettel-filter-query
-                      org-roam-folgezettel-filter-indicator
-                      (lambda () (prin1-to-string org-roam-folgezettel-filter-query))))))
+           :separator-width 2))))
     (display-buffer buf)
     buf))
 
