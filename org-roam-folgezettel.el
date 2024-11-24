@@ -464,10 +464,11 @@ non-nil when called with any number of universal arguments."
   (interactive (list nil current-prefix-arg))
   (let* ((current-query-string
           (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
-         (org-roam-folgezettel-filter-query
+         (new-query
           (read (or new-query (read-string "New filter query: " current-query-string)))))
-    (if (listp current-prefix-arg)
-        (org-roam-folgezettel-list new-buffer)
+    (if (eq 'cons (type-of current-prefix-arg))
+        (org-roam-folgezettel-list new-buffer nil new-query)
+      (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))))
 
 (defun org-roam-folgezettel-filter-directory (subdir new-buffer)
@@ -486,13 +487,14 @@ non-nil when called with any number of universal arguments."
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((subdir (string-trim subdir "/" "/"))
-        (org-roam-folgezettel-filter-query
+        (new-query
          (if org-roam-folgezettel-filter-query
              `(and ,org-roam-folgezettel-filter-query
                    (subdir ,subdir))
            `(subdir ,subdir))))
-    (if (listp current-prefix-arg)
-        (org-roam-folgezettel-list new-buffer)
+    (if (eq 'cons (type-of current-prefix-arg))
+        (org-roam-folgezettel-list new-buffer nil new-query)
+      (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes to the %s subdirectory" subdir)))
 
@@ -508,13 +510,14 @@ non-nil when called with any number of universal arguments."
   (interactive (list (read-string "Filter by the following person: ")
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((org-roam-folgezettel-filter-query
+  (let ((new-query
          (if org-roam-folgezettel-filter-query
              `(and ,org-roam-folgezettel-filter-query
                    (person ,person))
            `(person ,person))))
-    (if (listp current-prefix-arg)
-        (org-roam-folgezettel-list new-buffer)
+    (if (eq 'cons (type-of current-prefix-arg))
+        (org-roam-folgezettel-list new-buffer nil new-query)
+      (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes by the %s person" person)))
 
@@ -529,13 +532,14 @@ non-nil when called with any number of universal arguments."
                        (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((org-roam-folgezettel-filter-query
+  (let ((new-query
          (if org-roam-folgezettel-filter-query
              `(and ,org-roam-folgezettel-filter-query
                    (tags ,tags))
            `(tags ,tags))))
-    (if (listp current-prefix-arg)
-        (org-roam-folgezettel-list new-buffer)
+    (if (eq 'cons (type-of current-prefix-arg))
+        (org-roam-folgezettel-list new-buffer nil new-query)
+      (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes by the tags: %s" tags)))
 
@@ -655,19 +659,18 @@ columns in the `org-roam-folgezettel-mode' table."
 
 ;;;; Other
 (defun org-roam-folgezettel-refresh ()
-  "Refresh the current `org-roam-folgezettel-mode' buffer.
-Additionally, the buffer-local value of
-`org-roam-folgezettel-filter-query' will explicitly be set to the
-current value of `org-roam-folgezettel-filter-query'.  This allows users
-to call this function within a let form that sets the value of this
-variable without the buffer-local variable becoming out of sync with the
-value this function was called with."
+  "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
-  (widen)
-  (setq-local org-roam-folgezettel-filter-query org-roam-folgezettel-filter-query)
-  (save-excursion
-    (goto-char (point-min))
-    (vtable-revert-command)))
+  (let ((object (vtable-current-object)))
+    (widen)
+    (text-property-search-backward 'vtable)
+    (vtable-revert-command)
+    ;; We must manually go to the original object because this command first
+    ;; ensures we are on the vtable (e.g. not at the end of the buffer) by
+    ;; moving point, then calling `vtable-revert-command', which reverts the
+    ;; table but "restores" the point to the location we moved the point to.
+    ;; This is still the case even with `save-excursion'.
+    (vtable-goto-object object)))
 
 (defun org-roam-folgezettel-store-link (node)
   "Call `org-store-link' on NODE.
