@@ -56,6 +56,10 @@ every fresh `org-roam-folgezettel-mode' buffer."
           (const :tag "Color only the last index numbering section" color-last)
           (const :tag "Color the entire index number" color-full)))
 
+(defcustom org-roam-folgezettel-default-buffer-name "*Node listing*"
+  "The default name for `org-roam-folgezettel-mode' buffers."
+  :type 'string)
+
 ;;;; Faces
 
 ;;;; Internal
@@ -322,29 +326,27 @@ returned data is for.  VTABLE is the vtable this getter is for."
 
 ;;; Commands
 ;;;###autoload
-(defun org-roam-folgezettel-list (&optional arg buf-name filter-query)
+(defun org-roam-folgezettel-list (&optional buf-name filter-query)
   "List org-roam nodes with vtable.el.
-If BUF-NAME is provided, that will be the name of the buffer created.
-BUF-NAME defaults to \"*Node Listing*\".
+The first optional argument is NEW-BUFFER:
+- If BUF-NAME is a string, that will be the name of the buffer created.  If a
+  buffer with such a name exists already, open that buffer instead.
+- If BUF-NAME is non-nil but not a string, create a new buffer whose name is
+  unique (using `generate-new-buffer-name').
+- If BUF-NAME is nil, the string specified by
+  `org-roam-folgezettel-default-buffer-name' is used.
+When called interactively, BUF-NAME is the `current-prefix-arg'.
 
-If a buffer with such a name exists already, open that buffer instead.
-
-If ARG is supplied (prefix-argument when called interactively), then
-create a new buffer whose name is unique (using
-`generate-new-buffer-name').
-
-If FILTER-QUERY is supplied, use that form (see `org-roam-ql-nodes') to
-filter the nodes list."
+A second optional argument is available: FILTER-QUERY.  If FILTER-QUERY
+is supplied, use that form (see `org-roam-ql-nodes') to filter the nodes
+list."
   (interactive (list current-prefix-arg nil))
-  (when (and buf-name (not (stringp buf-name)))
-    (error "BUF-NAME should be a string!"))
-  (let ((default-buf-name "*Node Listing*"))
-    (setq buf-name
-          (cond
-           (buf-name default-buf-name)
-           ((and arg (not buf-name))
-            (generate-new-buffer-name default-buf-name))
-           ((not buf-name) default-buf-name))))
+  (setq buf-name
+        (cond
+         ((stringp buf-name) buf-name)
+         ((and buf-name (not (stringp buf-name)))
+          (generate-new-buffer-name org-roam-folgezettel-default-buffer-name))
+         ((not buf-name) org-roam-folgezettel-default-buffer-name)))
   (let ((buf (get-buffer-create buf-name)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
