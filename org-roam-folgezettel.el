@@ -581,6 +581,23 @@ If DIST is negative, move forward."
   (interactive "p" org-roam-folgezettel-mode)
   (org-roam-folgezettel-forward-sibling (- (or dist 1))))
 
+;;;; Movement via `completing-read'
+(defun org-roam-folgezettel-goto-node ()
+  "Go to node using `org-roam-node-find'-like interface.
+Use `org-roam-node-read' (which `org-roam-node-find' uses) to prompt for
+a node in the current `org-roam-folgezettel-mode' buffer, then go to it.
+
+The benefit of using this command over isearch of consult.el's
+`consult-line' is that org-roam's display template (see
+`org-roam-node-display-template') is leveraged, letting users see more
+or different information (possibly in bespoke formatting) than the
+columns in the `org-roam-folgezettel-mode' table."
+  (interactive nil org-roam-folgezettel-mode)
+  (vtable-goto-object (org-roam-node-read
+                       nil
+                       (lambda (node) (member node (vtable-objects (vtable-current-table))))
+                       nil t "Go to node: ")))
+
 ;;;; Moving nodes
 (defun org-roam-folgezettel-move-down (nlines)
   "Move the current line down NLINES."
@@ -661,6 +678,7 @@ If called interactively, NODE is the org-roam node at point."
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
+  "s" #'org-roam-folgezettel-goto-node
   "/ /" #'org-roam-folgezettel-filter-query-modify
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
