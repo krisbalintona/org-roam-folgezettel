@@ -358,6 +358,8 @@ filter the nodes list."
                       (or filter-query org-roam-folgezettel-filter-query)
                       org-roam-folgezettel-filter-indicator
                       (lambda () (prin1-to-string org-roam-folgezettel-filter-query)))
+          ;; Create vtable after setting buffer-local value for
+          ;; `org-roam-folgezettel-filter-query'
           (make-vtable
            :columns '(( :name "Index"
                         :align left
