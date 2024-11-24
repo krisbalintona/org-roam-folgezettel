@@ -453,7 +453,7 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-query-modify (new-query new-buffer)
+(defun org-roam-folgezettel-filter-query-edit (new-query new-buffer)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
 If NEW-QUERY is non-nil, use that string as the new query.
 
@@ -790,7 +790,7 @@ If called interactively, NODE is the org-roam node at point."
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
   "s" #'org-roam-folgezettel-goto-node
-  "/ /" #'org-roam-folgezettel-filter-query-modify
+  "/ /" #'org-roam-folgezettel-filter-query-edit
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
   "/ t" #'org-roam-folgezettel-filter-tags
