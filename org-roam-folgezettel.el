@@ -278,6 +278,28 @@ returned nodes are descended from."
     (and (string-prefix-p index-query index-value)
          (not (string-equal index-query index-value)))))
 
+;; TODO 2024-11-19: Finish implementation
+(org-roam-ql-defpred 'first-children
+  "A predicate for the first children of an index numbering.
+The first child of a node, speaking in folgezettel terms, is the
+immediate descendant of the node whose index numbering is the
+smallest (lexicographically) among its siblings.  For example, if a node
+has children indexed as 1.1, 1.2, and 1.3, the first child is 1.1."
+  #'org-roam-folgezettel-list--retrieve-index
+  (lambda (index-value index-query)
+    (unless (stringp index-query) (error "Index argument should be a string!"))
+    (when (and (string-prefix-p index-query index-value)
+               (not (string-equal index-query index-value)))
+      (let* ((suffix (string-remove-prefix index-query index-value))
+             (suffix-parts (org-roam-folgezettel--index-split suffix)))
+        ;; TODO 2024-11-23: We assume that the first child is either an index
+        ;; numbering that ends with a 1 or a.  This is incompatible with index
+        ;; numbering systems which use a different value (e.g. negative
+        ;; numbers).
+        (not (cl-member-if-not
+              (lambda (part) (or (string= part "1") (string= part "a")))
+              suffix-parts))))))
+
 ;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
@@ -521,9 +543,10 @@ by.  If DIST is negative, move upward."
              ;; We want to traverse children that are present in the current
              ;; vtable
              (children (org-roam-ql-nodes `(and (nodes-list ,(vtable-objects (vtable-current-table)))
-                                                (descendants ,index))
+                                                (first-children ,index))
                                           "index")))
-        (vtable-goto-object (nth (1- dist) children)))
+        (or (vtable-goto-object (nth (1- dist) children))
+            (message "There is no first child %s levels down" dist)))
     (org-roam-folgezettel-upward dist)))
 
 (defun org-roam-folgezettel-forward-sibling (&optional dist)
