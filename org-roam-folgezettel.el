@@ -158,7 +158,7 @@ Returns the trimmed value of the \"ROAM_PLACE\" property.
 Additionally,if the index string is empty, return nil."
   (let ((values (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))
     (when (and (cdr values) (not (string-empty-p (cdr values))))
-      (cdr values))))
+      (string-trim (cdr values)))))
 
 (defun org-roam-folgezettel-list--retrieve-person (node)
   "Retrieve the person of NODE.
