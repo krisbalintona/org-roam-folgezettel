@@ -195,12 +195,19 @@ Meant to be used as the formatter for index numberings."
        (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
                                  (propertize index 'face `(:foreground ,outline-color)))))))
 
-(defun org-roam-folgezettel--title-formatter (title)
-  "Propertize TITLE.
-Meant to be used as the formatter for titles."
-  (if (string= title "(No title)")
-      (propertize title 'face 'shadow)
-    title))
+(defun org-roam-folgezettel--path-formatter (path)
+  "Propertize PATH for `org-roam-folgezettel-mode' path column.
+PATH is a list of strings representing the headline outline path of a
+node, with the last string representing the title of the node."
+  (let ((olp (butlast path))
+        (title (car (last path))))
+    (setq title
+          (if (string= title "(No title)")
+              (propertize title 'face 'shadow)
+            title))
+    (string-join (append (mapcar (lambda (s) (propertize s 'face 'shadow)) olp)
+                         (list title))
+                 " > ")))
 
 (defun org-roam-folgezettel--tags-formatter (tags)
   "Propertize a series of TAGS.
@@ -322,12 +329,19 @@ contains the cached information for that node."
 (defun org-roam-folgezettel-list--getter (node column vtable)
   "Getter for vtable objects.
 NODE is an org-roam node.  COLUMN is the index of the column the
-returned data is for.  VTABLE is the vtable this getter is for."
+returned data is for.  VTABLE is the vtable this getter is for.
+
+This function supports getting data for columns with the following
+names:
+- Index
+- Path (i.e. `org-roam-node-olp' appended with `org-roam-node-title')
+- Tags"
   (pcase (vtable-column vtable column)
     ("Index"
      (or (org-roam-folgezettel-list--retrieve-index node) ""))
-    ("Title"
-     (or (org-roam-node-title node) "(No Title)"))
+    ("Path"
+     (append (org-roam-node-olp node)
+             (list (or (org-roam-node-title node) "(No Title)"))))
     ("Tags"
      (or (propertize
           (mapconcat (lambda (s) (concat "#" s)) (org-roam-node-tags node))
@@ -379,7 +393,7 @@ See the bindings in `org-roam-folgezettel-mode-map' below:
            :columns '(( :name "Index"
                         :align left
                         :formatter org-roam-folgezettel--index-formatter)
-                      ( :name "Title"
+                      ( :name "Path"
                         :align left
                         ;; TODO 2024-11-10: Figure out how to use a percentage.
                         ;; I think setting a percentage only works if the table
@@ -388,7 +402,7 @@ See the bindings in `org-roam-folgezettel-mode-map' below:
                         ;; ideally the major mode must also be set before
                         ;; creating the table.
                         :width 130
-                        :formatter org-roam-folgezettel--title-formatter)
+                        :formatter org-roam-folgezettel--path-formatter)
                       ( :name "Tags"
                         :align right
                         :formatter org-roam-folgezettel--tags-formatter))
