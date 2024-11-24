@@ -668,8 +668,9 @@ value this function was called with."
   (interactive)
   (widen)
   (setq-local org-roam-folgezettel-filter-query org-roam-folgezettel-filter-query)
-  (save-excursion (goto-char (point-min)))
-  (vtable-revert-command))
+  (save-excursion
+    (goto-char (point-min))
+    (vtable-revert-command)))
 
 (defun org-roam-folgezettel-store-link (node)
   "Call `org-store-link' on NODE.
