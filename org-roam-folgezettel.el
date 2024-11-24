@@ -524,9 +524,11 @@ by.  If DIST is negative, move downward."
              (parent-node (cl-find parent-index
                                    (vtable-objects (vtable-current-table))
                                    :key #'org-roam-folgezettel-list--retrieve-index
-                                   :test #'string-equal)))
-        (or (vtable-goto-object parent-node)
-            (message "No parent visible with index numbering %s" parent-index))
+                                   :test #'string-equal))
+             (orig-pt (point)))
+        (if (vtable-goto-object parent-node)
+            (push-mark orig-pt t)
+          (message "No parent visible with index numbering %s" parent-index))
         (when (< (1- (length index-parts)) dist)
           (message "Cannot go that high; going to top-level parent")))
     (org-roam-folgezettel-downward dist)))
@@ -544,9 +546,11 @@ by.  If DIST is negative, move upward."
              ;; vtable
              (children (org-roam-ql-nodes `(and (nodes-list ,(vtable-objects (vtable-current-table)))
                                                 (first-children ,index))
-                                          "index")))
-        (or (vtable-goto-object (nth (1- dist) children))
-            (message "There is no first child %s levels down" dist)))
+                                          "index"))
+             (orig-pt (point)))
+        (if (vtable-goto-object (nth (1- dist) children))
+            (push-mark orig-pt t)
+          (message "There is no first child %s levels down" dist)))
     (org-roam-folgezettel-upward dist)))
 
 (defun org-roam-folgezettel-forward-sibling (&optional dist)
@@ -565,10 +569,12 @@ If DIST is negative, move backward."
          ;; Find the current node in the sorted list
          (current-pos (cl-position node sorted-siblings :test #'eq))
          ;; Calculate the target position
-         (target-pos (+ current-pos (or dist 1))))
+         (target-pos (+ current-pos (or dist 1)))
+         (orig-pt (point)))
     (if (or (< target-pos 0) (>= target-pos (length sorted-siblings)))
         (message "No sibling at target position")
-      (vtable-goto-object (nth target-pos sorted-siblings)))))
+      (vtable-goto-object (nth target-pos sorted-siblings))
+      (push-mark orig-pt t))))
 
 (defun org-roam-folgezettel-backward-sibling (&optional dist)
   "Move point to DIST siblings backward from the vtable object at point.
