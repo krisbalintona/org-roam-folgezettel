@@ -7,6 +7,9 @@
 + List all org-roam nodes using ~vtable.el~
 + Filtering results
   - By subdirectory
+  - By index numbering and index number relations (e.g. parent, children, descendants, etc.)
+  - By tags
++ Movement by index numbering (e.g. up parent, down to child, forward/backward siblings)
 
 * Installation
 
