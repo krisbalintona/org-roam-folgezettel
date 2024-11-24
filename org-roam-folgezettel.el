@@ -348,6 +348,8 @@ filter the nodes list."
   (let ((buf (get-buffer-create buf-name)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
+        ;; Only insert vtable and set buffer-local values if the buffer doesn't
+        ;; already have one
         (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
           (org-roam-folgezettel-mode)
           (setq-local buffer-read-only t
