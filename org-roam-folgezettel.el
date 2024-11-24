@@ -251,6 +251,19 @@ a child of the same parent of that node."
             (org-roam-folgezettel--index-split index-query)))
       (equal (butlast index-value-parts) (butlast index-query-parts)))))
 
+(org-roam-ql-defpred 'descendants
+  "A predicate for the descendants of an index numbering.
+A descendant of a node is one that, speaking from in folgezettel terms,
+is a child of that node or a child of one of the children of that node.
+
+The returned nodes list does not include the node from which all other
+returned nodes are descended from."
+  #'org-roam-folgezettel-list--retrieve-index
+  (lambda (index-value index-query)
+    (unless (stringp index-query) (error "Index argument should be a string!"))
+    (and (string-prefix-p index-query index-value)
+         (not (string-equal index-query index-value)))))
+
 (org-roam-ql-defpred 'children
   "A predicate for the children of an index numbering.
 A child of a node is one that, speaking from in folgezettel terms, is
@@ -265,20 +278,6 @@ one nesting level below that node."
       (and (string-prefix-p index-query index-value)
            (= (1+ (length index-value-parts)) (length index-query-parts))))))
 
-(org-roam-ql-defpred 'descendants
-  "A predicate for the descendants of an index numbering.
-A descendant of a node is one that, speaking from in folgezettel terms,
-is a child of that node or a child of one of the children of that node.
-
-The returned nodes list does not include the node from which all other
-returned nodes are descended from."
-  #'org-roam-folgezettel-list--retrieve-index
-  (lambda (index-value index-query)
-    (unless (stringp index-query) (error "Index argument should be a string!"))
-    (and (string-prefix-p index-query index-value)
-         (not (string-equal index-query index-value)))))
-
-;; TODO 2024-11-19: Finish implementation
 (org-roam-ql-defpred 'first-children
   "A predicate for the first children of an index numbering.
 The first child of a node, speaking in folgezettel terms, is the
@@ -658,7 +657,6 @@ columns in the `org-roam-folgezettel-mode' table."
     (vtable-goto-object object)))
 
 ;;;; Other
-;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer.
 Additionally, the buffer-local value of
