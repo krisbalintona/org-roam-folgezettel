@@ -335,7 +335,11 @@ If a buffer with such a name exists already, open that buffer instead.
 
 If ARG is supplied (prefix-argument when called interactively), then
 create a new buffer whose name is unique (using
-`generate-new-buffer-name')."
+`generate-new-buffer-name').
+
+Finally, this function can be called within a let form that sets the
+value of `org-roam-folgezettel-filter-query' in order to set the
+buffer-local value of that variable and use that value."
   (interactive (list current-prefix-arg nil))
   (let ((default-buf-name "*Node Listing*"))
     (setq buf-name
@@ -371,6 +375,12 @@ create a new buffer whose name is unique (using
            :separator-width 2)
           (setq-local buffer-read-only t
                       truncate-lines t
+                      ;; We explicitly set `org-roam-folgezettel-filter-query'
+                      ;; to the current value of
+                      ;; `org-roam-folgezettel-filter-query' because this
+                      ;; command can be called within a let that sets
+                      ;; `org-roam-folgezettel-filter-query'.
+                      org-roam-folgezettel-filter-query org-roam-folgezettel-filter-query
                       org-roam-folgezettel-filter-indicator
                       (lambda () (prin1-to-string org-roam-folgezettel-filter-query))))))
     (display-buffer buf)
@@ -448,61 +458,90 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter-query-modify (new-query)
+(defun org-roam-folgezettel-filter-query-modify (new-query new-buffer)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
-In lisp, if NEW-QUERY is provided, use that string as the new query."
-  (interactive)
-  (let* ((current-query-string (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
-         (new-query-string (or new-query (read-string "New filter query: " current-query-string))))
-    (setq-local org-roam-folgezettel-filter-query (unless (string-empty-p new-query-string) (read new-query-string))))
-  (org-roam-folgezettel-refresh))
+If NEW-QUERY is non-nil, use that string as the new query.
 
-(defun org-roam-folgezettel-filter-directory (subdir)
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+non-nil when called with any number of universal arguments."
+  (interactive (list nil current-prefix-arg))
+  (let* ((current-query-string
+          (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
+         (org-roam-folgezettel-filter-query
+          (read (or new-query (read-string "New filter query: " current-query-string)))))
+    (if (listp current-prefix-arg)
+        (org-roam-folgezettel-list new-buffer)
+      (org-roam-folgezettel-refresh))))
+
+(defun org-roam-folgezettel-filter-directory (subdir new-buffer)
   "Filter the current buffer's node listing to SUBDIR.
 SUBDIR is a subdirectory of the `org-roam-directory'.
 
-If called interactively, SUBDIR is prompted for."
+If called interactively, SUBDIR is prompted for.
+
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+non-nil when called with any number of universal arguments."
   (interactive (list (completing-read "Subdirectory: "
                                       (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
                                               (seq-filter #'file-directory-p
-                                                          (directory-files org-roam-directory t "^[^.]" t)))))
+                                                          (directory-files org-roam-directory t "^[^.]" t))))
+                     current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((subdir (string-trim subdir "/" "/")))
-    (setq-local org-roam-folgezettel-filter-query
-                (if org-roam-folgezettel-filter-query
-                    `(and ,org-roam-folgezettel-filter-query
-                          (subdir ,subdir))
-                  `(subdir ,subdir)))
-    (message "Filtered nodes to the %s subdirectory" subdir)
-    (org-roam-folgezettel-refresh)))
+  (let ((subdir (string-trim subdir "/" "/"))
+        (org-roam-folgezettel-filter-query
+         (if org-roam-folgezettel-filter-query
+             `(and ,org-roam-folgezettel-filter-query
+                   (subdir ,subdir))
+           `(subdir ,subdir))))
+    (if (listp current-prefix-arg)
+        (org-roam-folgezettel-list new-buffer)
+      (org-roam-folgezettel-refresh))
+    (message "Filtered nodes to the %s subdirectory" subdir)))
 
-(defun org-roam-folgezettel-filter-person (person)
+(defun org-roam-folgezettel-filter-person (person new-buffer)
   "Filter the current node listing by PERSON.
 PERSON is the value of the \"ROAM_PERSON\" property.
 
-If called interactively, prompts for a person to filter by."
-  (interactive (list (read-string "Filter by the following person: ")) org-roam-folgezettel-mode)
-  (setq-local org-roam-folgezettel-filter-query
-              (if org-roam-folgezettel-filter-query
-                  `(and ,org-roam-folgezettel-filter-query
-                        (person ,person))
-                `(person ,person)))
-  (message "Filtered nodes by the %s person" person)
-  (org-roam-folgezettel-refresh))
+If called interactively, prompts for a person to filter by.
 
-(defun org-roam-folgezettel-filter-tags (tags)
-  "Filter the current node listing by TAGS.
-If called interactively, prompts for the tags to filter by."
-  (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
-                       (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions)))))
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+non-nil when called with any number of universal arguments."
+  (interactive (list (read-string "Filter by the following person: ")
+                     current-prefix-arg)
                org-roam-folgezettel-mode)
-  (setq-local org-roam-folgezettel-filter-query
-              (if org-roam-folgezettel-filter-query
-                  `(and ,org-roam-folgezettel-filter-query
-                        (tags ,tags))
-                `(tags ,tags)))
-  (message "Filtered nodes by the tags: %s" tags)
-  (org-roam-folgezettel-refresh))
+  (let ((org-roam-folgezettel-filter-query
+         (if org-roam-folgezettel-filter-query
+             `(and ,org-roam-folgezettel-filter-query
+                   (person ,person))
+           `(person ,person))))
+    (if (listp current-prefix-arg)
+        (org-roam-folgezettel-list new-buffer)
+      (org-roam-folgezettel-refresh))
+    (message "Filtered nodes by the %s person" person)))
+
+(defun org-roam-folgezettel-filter-tags (tags new-buffer)
+  "Filter the current node listing by TAGS.
+If called interactively, prompts for the tags to filter by.
+
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+non-nil when called with any number of universal arguments."
+  (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
+                       (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
+                     current-prefix-arg)
+               org-roam-folgezettel-mode)
+  (let ((org-roam-folgezettel-filter-query
+         (if org-roam-folgezettel-filter-query
+             `(and ,org-roam-folgezettel-filter-query
+                   (tags ,tags))
+           `(tags ,tags))))
+    (if (listp current-prefix-arg)
+        (org-roam-folgezettel-list new-buffer)
+      (org-roam-folgezettel-refresh))
+    (message "Filtered nodes by the tags: %s" tags)))
 
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
@@ -621,9 +660,16 @@ columns in the `org-roam-folgezettel-mode' table."
 ;;;; Other
 ;; FIXME 2024-11-12: This command is being overshadowed by the vtable local map.
 (defun org-roam-folgezettel-refresh ()
-  "Refresh the current `org-roam-folgezettel-mode' buffer."
+  "Refresh the current `org-roam-folgezettel-mode' buffer.
+Additionally, the buffer-local value of
+`org-roam-folgezettel-filter-query' will explicitly be set to the
+current value of `org-roam-folgezettel-filter-query'.  This allows users
+to call this function within a let form that sets the value of this
+variable without the buffer-local variable becoming out of sync with the
+value this function was called with."
   (interactive)
   (widen)
+  (setq-local org-roam-folgezettel-filter-query org-roam-folgezettel-filter-query)
   (save-excursion (goto-char (point-min)))
   (vtable-revert-command))
 
