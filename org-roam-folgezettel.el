@@ -271,12 +271,9 @@ one nesting level below that node."
   #'org-roam-folgezettel-list--retrieve-index
   (lambda (index-value index-query)
     (unless (stringp index-query) (error "Index argument should be a string!"))
-    (let* ((index-value-parts
-            (org-roam-folgezettel--index-split index-value))
-           (index-query-parts
-            (org-roam-folgezettel--index-split index-query)))
-      (and (string-prefix-p index-query index-value)
-           (= (1+ (length index-value-parts)) (length index-query-parts))))))
+    (and (string-prefix-p index-query index-value)
+         (= (length (org-roam-folgezettel--index-split index-value))
+            (1+ (length (org-roam-folgezettel--index-split index-query)))))))
 
 (org-roam-ql-defpred 'first-children
   "A predicate for the first children of an index numbering.
