@@ -565,6 +565,31 @@ non-nil when called with any number of universal arguments."
       (org-roam-folgezettel-refresh))
     (message "Filtered nodes to the children of %s" (org-roam-node-formatted node))))
 
+(defun org-roam-folgezettel-filter-descendants (node new-buffer)
+  "Filter the current node listing to the descendants of NODE.
+The filtered results also include NODE.
+
+If called interactively, NODE is the vtable object at point.
+
+If NEW-BUFER is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
+non-nil when called with any number of universal arguments."
+  (interactive (list (vtable-current-object) current-prefix-arg)
+               org-roam-folgezettel-mode)
+  (let* ((index (org-roam-folgezettel-list--retrieve-index node))
+         (new-query
+          (if org-roam-folgezettel-filter-query
+              `(and ,org-roam-folgezettel-filter-query
+                    (or (id ,(org-roam-node-id node))
+                        (descendants ,index)))
+            `(or (id ,(org-roam-node-id node))
+                 (descendants ,index)))))
+    (if (eq 'cons (type-of current-prefix-arg))
+        (org-roam-folgezettel-list new-buffer nil new-query)
+      (setq-local org-roam-folgezettel-filter-query new-query)
+      (org-roam-folgezettel-refresh))
+    (message "Filtered nodes to the descendants of %s" (org-roam-node-formatted node))))
+
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
   "Move point to DIST parents upward in the vtable.
@@ -751,7 +776,8 @@ If called interactively, NODE is the org-roam node at point."
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
   "/ t" #'org-roam-folgezettel-filter-tags
-  "/ i c" #'org-roam-folgezettel-filter-children)
+  "/ i c" #'org-roam-folgezettel-filter-children
+  "/ i d" #'org-roam-folgezettel-filter-descendants)
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
