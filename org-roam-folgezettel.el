@@ -461,9 +461,8 @@ non-nil when called with any number of universal arguments."
   (interactive (list nil current-prefix-arg))
   (let* ((current-query-string
           (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
-         (new-query
-          (read (or new-query (read-string "New filter query: " current-query-string)))))
-    (if (eq 'cons (type-of current-prefix-arg))
+         (new-query (read (or new-query (read-string "New filter query: " current-query-string)))))
+    (if (and current-prefix-arg (listp current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))))
@@ -484,12 +483,11 @@ non-nil when called with any number of universal arguments."
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((subdir (string-trim subdir "/" "/"))
-        (new-query
-         (if org-roam-folgezettel-filter-query
-             `(and ,org-roam-folgezettel-filter-query
-                   (subdir ,subdir))
-           `(subdir ,subdir))))
-    (if (eq 'cons (type-of current-prefix-arg))
+        (new-query (if org-roam-folgezettel-filter-query
+                       `(and ,org-roam-folgezettel-filter-query
+                             (subdir ,subdir))
+                     `(subdir ,subdir))))
+    (if (and current-prefix-arg (listp current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
@@ -507,12 +505,11 @@ non-nil when called with any number of universal arguments."
   (interactive (list (read-string "Filter by the following person: ")
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((new-query
-         (if org-roam-folgezettel-filter-query
-             `(and ,org-roam-folgezettel-filter-query
-                   (person ,person))
-           `(person ,person))))
-    (if (eq 'cons (type-of current-prefix-arg))
+  (let ((new-query (if org-roam-folgezettel-filter-query
+                       `(and ,org-roam-folgezettel-filter-query
+                             (person ,person))
+                     `(person ,person))))
+    (if (and current-prefix-arg (listp current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
@@ -529,12 +526,11 @@ non-nil when called with any number of universal arguments."
                        (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((new-query
-         (if org-roam-folgezettel-filter-query
-             `(and ,org-roam-folgezettel-filter-query
-                   (tags ,tags))
-           `(tags ,tags))))
-    (if (eq 'cons (type-of current-prefix-arg))
+  (let ((new-query (if org-roam-folgezettel-filter-query
+                       `(and ,org-roam-folgezettel-filter-query
+                             (tags ,tags))
+                     `(tags ,tags))))
+    (if (and current-prefix-arg (listp current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
       (org-roam-folgezettel-refresh))
@@ -552,13 +548,13 @@ non-nil when called with any number of universal arguments."
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
-         (new-query
-          (if org-roam-folgezettel-filter-query
-              `(and ,org-roam-folgezettel-filter-query
-                    (or (id ,(org-roam-node-id node))
-                        (children ,index)))
-            `(or (id ,(org-roam-node-id node))
-                 (children ,index)))))
+         (id (org-roam-node-id node))
+         (new-query (if org-roam-folgezettel-filter-query
+                        `(and ,org-roam-folgezettel-filter-query
+                              (or (id ,id)
+                                  (children ,index)))
+                      `(or (id ,id)
+                           (children ,index)))))
     (if (eq 'cons (type-of current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
@@ -577,13 +573,13 @@ non-nil when called with any number of universal arguments."
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
-         (new-query
-          (if org-roam-folgezettel-filter-query
-              `(and ,org-roam-folgezettel-filter-query
-                    (or (id ,(org-roam-node-id node))
-                        (descendants ,index)))
-            `(or (id ,(org-roam-node-id node))
-                 (descendants ,index)))))
+         (id (org-roam-node-id node))
+         (new-query (if org-roam-folgezettel-filter-query
+                        `(and ,org-roam-folgezettel-filter-query
+                              (or (id ,id)
+                                  (descendants ,index)))
+                      `(or (id ,id)
+                           (descendants ,index)))))
     (if (eq 'cons (type-of current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
