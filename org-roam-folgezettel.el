@@ -460,10 +460,11 @@ If NEW-QUERY is non-nil, use that string as the new query.
 If NEW-BUFER is non-nil, then apply this filter to a new
 `org-roam-folgezettel-mode' buffer.  Interactively, NEW-BUFFER is
 non-nil when called with any number of universal arguments."
-  (interactive (list nil current-prefix-arg))
-  (let* ((current-query-string
-          (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
-         (new-query (read (or new-query (read-string "New filter query: " current-query-string)))))
+  (interactive (list (read-string "New filter query: "
+                                  (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
+                     current-prefix-arg)
+               org-roam-folgezettel-mode)
+  (let* ((new-query (read new-query)))
     (if (and current-prefix-arg (listp current-prefix-arg))
         (org-roam-folgezettel-list new-buffer nil new-query)
       (setq-local org-roam-folgezettel-filter-query new-query)
