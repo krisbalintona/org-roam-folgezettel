@@ -340,6 +340,8 @@ Finally, this function can be called within a let form that sets the
 value of `org-roam-folgezettel-filter-query' in order to set the
 buffer-local value of that variable and use that value."
   (interactive (list current-prefix-arg nil))
+  (when (and buf-name (not (stringp buf-name)))
+    (error "BUF-NAME should be a string!"))
   (let ((default-buf-name "*Node Listing*"))
     (setq buf-name
           (cond
