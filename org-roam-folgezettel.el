@@ -178,22 +178,20 @@ Additionally,if the index string is empty, return nil."
 Meant to be used as the formatter for index numberings."
   (let* ((parts (org-roam-folgezettel--index-split index))
          (level (1- (length parts)))
-         (outline-color
+         (outline-face
           (when parts
-            (face-foreground
-             (if (= 0 (+ 1 (% (1- level) 8)))
-                 'font-lock-warning-face
-               (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))
-             nil t))))
+            (if (= 0 (+ 1 (% (1- level) 8)))
+                'font-lock-warning-face
+              (intern (format "outline-%s" (+ 1 (% (1- level) 8))))))))
     (pcase org-roam-folgezettel-index-color-style
       ('color-last
        (if parts
            (concat (propertize (string-remove-suffix (car (last parts)) index) 'face 'shadow)
-                   (propertize (car (last parts)) 'face `(:weight bold :foreground ,outline-color)))
+                   (propertize (car (last parts)) 'face `(:weight bold :inherit ,outline-face)))
          ""))
       ('color-full
        (replace-regexp-in-string "\\." (propertize "." 'face 'shadow)
-                                 (propertize index 'face `(:foreground ,outline-color)))))))
+                                 (propertize index 'face `outline-face))))))
 
 (defun org-roam-folgezettel--path-formatter (path)
   "Propertize PATH for `org-roam-folgezettel-mode' path column.
