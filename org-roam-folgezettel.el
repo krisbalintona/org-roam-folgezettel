@@ -154,6 +154,33 @@ See the docstring of `org-roam-folgezettel--index-lessp'."
         (index2 (org-roam-folgezettel-list--retrieve-index node2)))
     (org-roam-folgezettel--index-lessp index1 index2)))
 
+;;;; Buffer names
+(defun org-roam-folgezettel-filter--modify (query new-buffer)
+  "Modify the filter for the current buffer and update listing.
+If QUERY is non-nil, use that string as the new query.
+
+If NEW-BUFFER is non-nil, pass that argument to
+`org-roam-folgezettel-list'.  For a description of the behavior of
+NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
+  (if new-buffer
+      (org-roam-folgezettel-list new-buffer query)
+    (setq-local org-roam-folgezettel-filter-query query)
+    (org-roam-folgezettel-refresh)))
+
+(defun org-roam-folgezettel-filter--buffer-name-from-query (query)
+  "Returns buffer name according to QUERY.
+QUERY is a query (a string is also accepted) form accepted by
+`org-roam-ql-nodes'.
+
+This function returns a string intended to convey the QUERY by combining
+it with the value of `org-roam-folgezettel-default-buffer-name'.  For
+example, if QUERY is \"(title \"bar\")\" and the value of
+`org-roam-folgezettel-default-buffer-name' is \"*foo*\", then this
+function returns \"*foo [bar]*\"."
+  (let ((trimmed-default
+         (string-trim org-roam-folgezettel-default-buffer-name "*" "*")))
+    (format "*%s [%s]*" trimmed-default query)))
+
 ;;;; Vtable
 ;;;;; Retrieving values
 (defun org-roam-folgezettel-list--retrieve-index (node)
@@ -482,31 +509,6 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
-(defun org-roam-folgezettel-filter--modify (query new-buffer)
-  "Modify the filter for the current buffer and update listing.
-If QUERY is non-nil, use that string as the new query.
-
-If NEW-BUFFER is non-nil, pass that argument to
-`org-roam-folgezettel-list'.  For a description of the behavior of
-NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
-  (if new-buffer
-      (org-roam-folgezettel-list new-buffer query)
-    (setq-local org-roam-folgezettel-filter-query query)
-    (org-roam-folgezettel-refresh)))
-
-(defun org-roam-folgezettel-filter--buffer-name-from-query (query)
-  "Returns buffer name according to QUERY.
-QUERY is a query form accepted by `org-roam-ql-nodes'.
-
-This function returns a string intended to convey the QUERY by combining
-it with the value of `org-roam-folgezettel-default-buffer-name'.  For
-example, if QUERY is \"(title \"bar\")\" and the value of
-`org-roam-folgezettel-default-buffer-name' is \"*foo*\", then this
-function returns \"*foo [bar]*\"."
-  (let ((trimmed-default
-         (string-trim org-roam-folgezettel-default-buffer-name "*" "*")))
-    (format "*%s [%s]*" trimmed-default query)))
-
 (defun org-roam-folgezettel-filter-query-edit (new-query new-buffer-p)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
 If NEW-QUERY is non-nil, use that string as the new query.
