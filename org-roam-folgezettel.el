@@ -824,7 +824,9 @@ columns in the `org-roam-folgezettel-mode' table."
 (defun org-roam-folgezettel-refresh ()
   "Refresh the current `org-roam-folgezettel-mode' buffer."
   (interactive)
-  (let ((object (vtable-current-object))
+  ;; We rely on the node's ID in case any data of the node was changed, e.g.,
+  ;; its tags
+  (let ((id (org-roam-node-id (vtable-current-object)))
         (col (current-column)))
     (widen)
     (text-property-search-backward 'vtable)
@@ -834,7 +836,9 @@ columns in the `org-roam-folgezettel-mode' table."
     ;; moving point, then calling `vtable-revert-command', which reverts the
     ;; table but "restores" the point to the location we moved the point to.
     ;; This is still the case even with `save-excursion'.
-    (vtable-goto-object object)
+    (vtable-goto-object
+     (cl-find-if (lambda (object) (equal id (org-roam-node-id object)))
+                 (vtable-objects (vtable-current-table))))
     (move-to-column col)))
 
 (defun org-roam-folgezettel-store-link (node)
