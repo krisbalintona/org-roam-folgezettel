@@ -167,7 +167,7 @@ NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
     (setq-local org-roam-folgezettel-filter-query query)
     (org-roam-folgezettel-refresh)))
 
-(defun org-roam-folgezettel-filter--buffer-name-from-query (query)
+(defun org-roam-folgezettel--buffer-name-concat (query)
   "Returns buffer name according to QUERY.
 QUERY is a query (a string is also accepted) form accepted by
 `org-roam-ql-nodes'.
@@ -527,7 +527,7 @@ Other filtering commands are available in
   (org-roam-folgezettel-filter--modify
    (read new-query)
    (when new-buffer-p
-     (org-roam-folgezettel-filter--buffer-name-from-query new-query))))
+     (org-roam-folgezettel--buffer-name-concat new-query))))
 
 (defun org-roam-folgezettel-filter-directory (subdir new-buffer-p)
   "Filter the current buffer's node listing to SUBDIR.
@@ -556,7 +556,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes to the %s subdirectory" subdir)))
 
 (defun org-roam-folgezettel-filter-person (person new-buffer-p)
@@ -582,7 +582,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes by the %s person" person)))
 
 (defun org-roam-folgezettel-filter-title (regexp new-buffer-p)
@@ -606,7 +606,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered node titles by regexp: %s" regexp)))
 
 (defun org-roam-folgezettel-filter-tags (tags new-buffer-p)
@@ -631,7 +631,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes by the tags: %s" tags)))
 
 (defun org-roam-folgezettel-filter-children (node new-buffer-p)
@@ -660,7 +660,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes to the children of %s" (org-roam-node-formatted node))))
 
 (defun org-roam-folgezettel-filter-descendants (node new-buffer-p)
@@ -689,7 +689,7 @@ Other filtering commands are available in
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
-       (org-roam-folgezettel-filter--buffer-name-from-query new-query)))
+       (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes to the descendants of %s" (org-roam-node-formatted node))))
 
 ;;;; Movement via index numbers
@@ -867,7 +867,7 @@ If called interactively, NODE is the org-roam node at point."
   (interactive (list (org-roam-node-at-point :assert)) org-mode)
   (let ((node-formatted (org-roam-node-formatted node)))
     (let ((buf (org-roam-folgezettel-list
-                (org-roam-folgezettel-filter--buffer-name-from-query node-formatted))))
+                (org-roam-folgezettel--buffer-name-concat node-formatted))))
       (switch-to-buffer buf)
       (goto-char (point-min))         ; Ensure point is in vtable
       (if (vtable-goto-object node)
