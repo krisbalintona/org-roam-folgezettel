@@ -867,8 +867,9 @@ If called interactively, NODE is the org-roam node at point."
     (let ((buf (org-roam-folgezettel-list :new-buffer)))
       (switch-to-buffer buf)
       (goto-char (point-min))         ; Ensure point is in vtable
-      (vtable-goto-object node)
-      (message "Going to node titled \"%s\"..." (org-roam-node-title node)))))
+      (if (vtable-goto-object node)
+          (message "Going to %s..." (org-roam-node-formatted node))
+        (message "Could not find %s" (org-roam-node-formatted node))))))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
