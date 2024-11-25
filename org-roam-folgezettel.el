@@ -863,13 +863,14 @@ provided."
   "Opens NODE in a new `org-roam-folgezettel-mode' buffer.
 If called interactively, NODE is the org-roam node at point."
   (interactive (list (org-roam-node-at-point :assert)) org-mode)
-  (progn
-    (let ((buf (org-roam-folgezettel-list :new-buffer)))
+  (let ((node-formatted (org-roam-node-formatted node)))
+    (let ((buf (org-roam-folgezettel-list
+                (org-roam-folgezettel-filter--buffer-name-from-query node-formatted))))
       (switch-to-buffer buf)
       (goto-char (point-min))         ; Ensure point is in vtable
       (if (vtable-goto-object node)
-          (message "Going to %s..." (org-roam-node-formatted node))
-        (message "Could not find %s" (org-roam-node-formatted node))))))
+          (message "Going to %s..." node-formatted)
+        (message "Could not find %s" node-formatted)))))
 
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
