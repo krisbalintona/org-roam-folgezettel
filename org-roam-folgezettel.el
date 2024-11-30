@@ -488,7 +488,7 @@ node at point."
                              (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
                                       (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
                    collect (org-roam-folgezettel-list--retrieve-index node)))
-         (prompt "New index numbering: ")
+         (prompt (format "New index numbering for %s: " (org-roam-node-formatted node)))
          (retry-p t)
          new-index)
     (while retry-p
