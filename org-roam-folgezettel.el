@@ -889,9 +889,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "DEL" #'scroll-down-command
   "p" #'previous-line
   "n" #'next-line
-  ;; TODO 2024-11-14: I haven't figure out a way to shadow the
-  ;; `vtable-revert-command' binding in `vtable-map'
-  "r" #'org-roam-folgezettel-refresh
+  "g" #'org-roam-folgezettel-refresh
   "q" #'quit-window
   "x" #'kill-current-buffer
   "RET" #'org-roam-folgezettel-open-node
