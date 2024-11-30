@@ -883,15 +883,18 @@ Internally, calls `vtable-remove-object' on the vtable at point."
     (vtable-remove-object (vtable-current-table) node)))
 
 ;;; Major mode and keymap
-(defvar-keymap org-roam-folgezettel-table-map
+(defvar-keymap org-roam-folgezettel-mode-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "SPC" #'scroll-up-command
   "DEL" #'scroll-down-command
+  "q" #'quit-window
+  "x" #'kill-current-buffer)
+
+(defvar-keymap org-roam-folgezettel-table-map
+  :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "p" #'previous-line
   "n" #'next-line
   "g" #'org-roam-folgezettel-refresh
-  "q" #'quit-window
-  "x" #'kill-current-buffer
   "RET" #'org-roam-folgezettel-open-node
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
