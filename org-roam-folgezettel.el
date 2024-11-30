@@ -71,6 +71,10 @@ Inspired by tablist.el's filter indicator.  Is added to
 (defvar-local org-roam-folgezettel-filter-query-history nil
   "History of `org-roam-folgezettel-filter-query' values.")
 
+(defvar-local org-roam-folgezettel-filter-query-history-place nil
+  "Current place in `org-roam-folgezettel-filter-query-history'.
+Is zero-indexed.")
+
 ;;; Functions
 ;;;; Index numbering sorter
 (defun org-roam-folgezettel--index-normalize (index)
@@ -167,8 +171,12 @@ If NEW-BUFFER is non-nil, pass that argument to
 NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
   (if new-buffer
       (org-roam-folgezettel-list new-buffer query)
-    (setq-local org-roam-folgezettel-filter-query query)
-    (push query org-roam-folgezettel-filter-query-history)
+    (setq-local org-roam-folgezettel-filter-query query
+                org-roam-folgezettel-filter-query-history
+                (append (list query)
+                        (nthcdr org-roam-folgezettel-filter-query-history-place
+                                org-roam-folgezettel-filter-query-history))
+                org-roam-folgezettel-filter-query-history-place 0)
     (org-roam-folgezettel-refresh)))
 
 ;;;; Buffer names
@@ -416,7 +424,8 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                       org-roam-folgezettel-filter-query
                       (or filter-query org-roam-folgezettel-filter-query)
                       org-roam-folgezettel-filter-query-history
-                      (or filter-query org-roam-folgezettel-filter-query)
+                      (list (or filter-query org-roam-folgezettel-filter-query))
+                      org-roam-folgezettel-filter-query-history-place 0
                       org-roam-folgezettel-filter-indicator
                       (lambda () (prin1-to-string org-roam-folgezettel-filter-query)))
           ;; Create vtable after setting buffer-local value for
@@ -517,6 +526,35 @@ node at point."
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
+(defun org-roam-folgezettel-filter-undo ()
+  "Apply previous filter query.
+Queries are preserved in `org-roam-folgezettel-filter-query-history'."
+  (interactive)
+  (let ((previous-place
+         (1+ org-roam-folgezettel-filter-query-history-place)))
+    (if (< (1- (length org-roam-folgezettel-filter-query-history))
+           previous-place)
+        (message "No previous query in filter history")
+      (setq-local org-roam-folgezettel-filter-query
+                  (nth previous-place org-roam-folgezettel-filter-query-history)
+                  org-roam-folgezettel-filter-query-history-place previous-place)
+      (message "Going back in filter history")
+      (org-roam-folgezettel-refresh))))
+
+(defun org-roam-folgezettel-filter-redo ()
+  "Apply next filter query.
+Queries are preserved in `org-roam-folgezettel-filter-query-history'."
+  (interactive)
+  (let ((next-place
+         (1- org-roam-folgezettel-filter-query-history-place)))
+    (if (> 0 next-place)
+        (message "No next query in filter history")
+      (setq-local org-roam-folgezettel-filter-query
+                  (nth next-place org-roam-folgezettel-filter-query-history)
+                  org-roam-folgezettel-filter-query-history-place next-place)
+      (message "Going forward in filter history")
+      (org-roam-folgezettel-refresh))))
+
 (defun org-roam-folgezettel-filter-query-edit (new-query new-buffer-p)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
 If NEW-QUERY is non-nil, use that string as the new query.
@@ -915,6 +953,8 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "w" #'org-roam-folgezettel-store-link
   "s" #'org-roam-folgezettel-goto-node
   "C-k" #'org-roam-folgezettel-kill-line
+  "C-/" #'org-roam-folgezettel-filter-undo
+  "C-?" #'org-roam-folgezettel-filter-redo
   "/ /" #'org-roam-folgezettel-filter-query-edit
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
