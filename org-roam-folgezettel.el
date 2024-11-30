@@ -390,7 +390,7 @@ A second optional argument is available: FILTER-QUERY.  If FILTER-QUERY
 is supplied, use that form (see `org-roam-ql-nodes') to filter the nodes
 list.
 
-See the bindings in `org-roam-folgezettel-mode-map' below:
+See the bindings in `org-roam-folgezettel-table-map' below:
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list current-prefix-arg nil))
   (setq buf-name
@@ -431,6 +431,7 @@ See the bindings in `org-roam-folgezettel-mode-map' below:
                       ( :name "Tags"
                         :align right
                         :formatter org-roam-folgezettel--tags-formatter))
+           :keymap org-roam-folgezettel-table-map
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2))))
@@ -518,7 +519,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "New filter query: "
                                   (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
@@ -540,7 +541,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (completing-read "Subdirectory: "
                                       (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
@@ -570,7 +571,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "Filter by the following person: ")
                      current-prefix-arg)
@@ -594,7 +595,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-regexp "Regexp to filter titles by: ")
                      current-prefix-arg)
@@ -618,7 +619,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
                        (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
@@ -645,7 +646,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -674,7 +675,7 @@ If NEW-BUFFER-P is non-nil, then apply this filter to a new
 applied.
 
 Other filtering commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (vtable-current-object) current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -699,7 +700,7 @@ DIST is an integer representing the number of parents to move upwards
 by.  If DIST is negative, move downward.
 
 Other movement commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (setq dist (or dist 1))
@@ -732,7 +733,7 @@ DIST is an integer representing the number of parents to move downwards
 by.  If DIST is negative, move upward.
 
 Other movement commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (setq dist (or dist 1))
@@ -756,7 +757,7 @@ DIST is an integer representing the number of siblings to move across.
 If DIST is negative, move backward.
 
 Other movement commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive "p")
   (let* ((node (vtable-current-object))
@@ -781,7 +782,7 @@ DIST is an integer representing the number of siblings to move across.
 If DIST is negative, move forward.
 
 Other movement commands are available in
-`org-roam-folgezettel-mode-map':
+`org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive "p" org-roam-folgezettel-mode)
   (org-roam-folgezettel-forward-sibling (- (or dist 1))))
@@ -874,9 +875,16 @@ If called interactively, NODE is the org-roam node at point."
         (message "Going to %s..." node-formatted)
       (message "Could not find %s" node-formatted))))
 
+(defun org-roam-folgezettel-kill-line (node)
+  "Visually remove NODE from table at point.
+Internally, calls `vtable-remove-object' on the vtable at point."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (let ((inhibit-read-only t))
+    (vtable-remove-object (vtable-current-table) node)))
+
 ;;; Major mode and keymap
-(defvar-keymap org-roam-folgezettel-mode-map
-  :doc "Mode map for `org-roam-folgezettel-mode'."
+(defvar-keymap org-roam-folgezettel-table-map
+  :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "SPC" #'scroll-up-command
   "DEL" #'scroll-down-command
   "p" #'previous-line
@@ -898,6 +906,7 @@ If called interactively, NODE is the org-roam node at point."
   "M-<down>" #'org-roam-folgezettel-move-down
   "w" #'org-roam-folgezettel-store-link
   "s" #'org-roam-folgezettel-goto-node
+  "C-k" #'org-roam-folgezettel-kill-line
   "/ /" #'org-roam-folgezettel-filter-query-edit
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
