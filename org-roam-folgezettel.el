@@ -68,6 +68,9 @@ every fresh `org-roam-folgezettel-mode' buffer."
 Inspired by tablist.el's filter indicator.  Is added to
 `mode-line-misc-info'.")
 
+(defvar-local org-roam-folgezettel-filter-query-history nil
+  "History of `org-roam-folgezettel-filter-query' values.")
+
 ;;; Functions
 ;;;; Index numbering sorter
 (defun org-roam-folgezettel--index-normalize (index)
@@ -154,7 +157,7 @@ See the docstring of `org-roam-folgezettel--index-lessp'."
         (index2 (org-roam-folgezettel-list--retrieve-index node2)))
     (org-roam-folgezettel--index-lessp index1 index2)))
 
-;;;; Buffer names
+;;;; Filter queries
 (defun org-roam-folgezettel-filter--modify (query new-buffer)
   "Modify the filter for the current buffer and update listing.
 If QUERY is non-nil, use that string as the new query.
@@ -165,8 +168,10 @@ NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
   (if new-buffer
       (org-roam-folgezettel-list new-buffer query)
     (setq-local org-roam-folgezettel-filter-query query)
+    (push query org-roam-folgezettel-filter-query-history)
     (org-roam-folgezettel-refresh)))
 
+;;;; Buffer names
 (defun org-roam-folgezettel--buffer-name-concat (query)
   "Returns buffer name according to QUERY.
 QUERY is a query (a string is also accepted) form accepted by
@@ -409,6 +414,8 @@ See the bindings in `org-roam-folgezettel-table-map' below:
           (setq-local buffer-read-only t
                       truncate-lines t
                       org-roam-folgezettel-filter-query
+                      (or filter-query org-roam-folgezettel-filter-query)
+                      org-roam-folgezettel-filter-query-history
                       (or filter-query org-roam-folgezettel-filter-query)
                       org-roam-folgezettel-filter-indicator
                       (lambda () (prin1-to-string org-roam-folgezettel-filter-query)))
