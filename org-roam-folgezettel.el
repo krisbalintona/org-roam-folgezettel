@@ -533,13 +533,15 @@ node at point."
         (setq retry-p nil)))
     (unless (string= current-index new-index)
       (with-current-buffer (find-file-noselect file)
-        (save-excursion
-          (goto-char node-point)
-          (org-roam-node-at-point 'assert)
-          (org-set-property "ROAM_PLACE" new-index))
-        (save-buffer)
-        (org-roam-db-update-file file)
-        (message "Set index of %s to %s" (org-roam-node-title node) new-index))
+        (save-restriction
+          (save-excursion
+            (widen)
+            (goto-char node-point)
+            (org-roam-node-at-point 'assert)
+            (org-set-property "ROAM_PLACE" new-index))
+          (save-buffer)
+          (org-roam-db-update-file file)
+          (message "Set index of %s to %s" (org-roam-node-title node) new-index)))
       (vtable-update-object (vtable-current-table) node))))
 
 ;;;; Filtering
