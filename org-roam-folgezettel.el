@@ -243,17 +243,26 @@ Meant to be used as the formatter for index numberings."
 
 (defun org-roam-folgezettel--path-formatter (path)
   "Propertize PATH for `org-roam-folgezettel-mode' path column.
-PATH is a list of strings representing the headline outline path of a
-node, with the last string representing the title of the node."
-  (let ((olp (butlast path))
-        (title (car (last path))))
-    (setq title
-          (if (string= title "(No title)")
-              (propertize title 'face 'shadow)
-            title))
-    (string-join (append (mapcar (lambda (s) (propertize s 'face '(:weight light :inherit shadow))) olp)
-                         (list title))
-                 " > ")))
+PATH is a list of strings representing the file and headline outline
+path of a node, with the last string representing the title of the node."
+  (let* ((path-face '(:weight light :inherit shadow))
+         (separator " > ")
+         (file-title (car path))
+         (propertized-file-title
+          (propertize (concat file-title separator) 'face 'shadow))
+         (olp (butlast (cdr path)))
+         (propertized-olp
+          (string-join (mapcar (lambda (s) (propertize s 'face path-face)) olp)
+                       (propertize separator 'face 'shadow)))
+         (title (car (last path)))
+         (propertized-title (propertize title 'face '(:height 1.0 :inherit variable-pitch))))
+    (concat propertized-title
+            (unless (string-empty-p propertized-olp)
+              (concat
+               (propertize " (" 'face 'shadow)
+               propertized-file-title
+               propertized-olp
+               (propertize ")" 'face 'shadow))))))
 
 (defun org-roam-folgezettel--tags-formatter (tags)
   "Propertize a series of TAGS.
@@ -383,8 +392,9 @@ names:
     ("Index"
      (or (org-roam-folgezettel-list--retrieve-index node) ""))
     ("Path"
-     (append (org-roam-node-olp node)
-             (list (or (org-roam-node-title node) "(No Title)"))))
+     (append (list (org-roam-node-file-title node))
+             (org-roam-node-olp node)
+             (list (org-roam-node-title node))))
     ("Tags"
      (or (propertize
           (mapconcat (lambda (s) (concat "#" s)) (org-roam-node-tags node))
