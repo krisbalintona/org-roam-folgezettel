@@ -503,13 +503,11 @@ node at point."
          (file (org-roam-node-file node))
          (current-index (org-roam-folgezettel-list--retrieve-index node))
          (node-point (org-roam-node-point node))
-         (node-box
-          ()
-          )
-         (all-index-numbers          ; All index numbers in current subdirectory
+         (node-box (org-roam-folgezettel-list--retrieve-box node))
+         (all-box-nodes (org-roam-ql-nodes `(box ,node-box)))
+         (all-index-numbers
           (cl-loop for node in (org-roam-node-list)
-                   when (and (file-in-directory-p (org-roam-node-file node) (file-name-directory file))
-                             (org-roam-ql-nodes `(box ,node-box))
+                   when (and (member node all-box-nodes)
                              (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
                                       (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
                    collect (org-roam-folgezettel-list--retrieve-index node)))
