@@ -198,8 +198,8 @@ function returns \"*foo [bar]*\"."
 ;;;;; Retrieving values
 (defun org-roam-folgezettel-list--retrieve-index (node)
   "Retrieve the index number of NODE.
-Returns the trimmed value of the \"ROAM_PLACE\" property.
-Additionally,if the index string is empty, return nil."
+Returns the trimmed value of the \"ROAM_PLACE\" property.  Additionally,
+if the index string is empty, return nil."
   (let ((values (assoc "ROAM_PLACE" (org-roam-node-properties node) #'string-equal)))
     (when (and (cdr values) (not (string-empty-p (cdr values))))
       (string-trim (cdr values)))))
@@ -207,8 +207,16 @@ Additionally,if the index string is empty, return nil."
 (defun org-roam-folgezettel-list--retrieve-person (node)
   "Retrieve the person of NODE.
 Returns the trimmed value of the \"ROAM_PERSON\" property.
-Additionally,if the index string is empty, return nil."
+Additionally, if the index string is empty, return nil."
   (let ((values (assoc "ROAM_PERSON" (org-roam-node-properties node) #'string-equal)))
+    (when (and (cdr values) (not (string-empty-p (cdr values))))
+      (cdr values))))
+
+(defun org-roam-folgezettel-list--retrieve-box (node)
+  "Retrieve the box of NODE.
+Returns the trimmed value of the \"ROAM_BOX\" property.  Additionally,
+if the index string is empty, return nil."
+  (let ((values (assoc "ROAM_BOX" (org-roam-node-properties node) #'string-equal)))
     (when (and (cdr values) (not (string-empty-p (cdr values))))
       (cdr values))))
 
@@ -280,10 +288,7 @@ Returns non-nil when a node is within (at any level) the subdirectory."
   "A predicate for the slip-box of a node.
 Returns non-nil when a node's \"ROAM_BOX\" property matches the provided
 argument (a string)."
-  (lambda (node)
-    (let ((values (assoc "ROAM_BOX" (org-roam-node-properties node) #'string-equal)))
-      (when (and (cdr values) (not (string-empty-p (cdr values))))
-        (cdr values))))
+  #'org-roam-folgezettel-list--retrieve-box
   (lambda (box-value box-query)
     (when (and box-value (not (string-empty-p box-value)))
       (string-equal box-value
@@ -494,13 +499,17 @@ object at point."
 Prompts for a new index for NODE.  If called interactively, NODE is the
 node at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (let* ((file (org-roam-node-file node))
+  (let* ((save-silently t)
+         (file (org-roam-node-file node))
          (current-index (org-roam-folgezettel-list--retrieve-index node))
          (node-point (org-roam-node-point node))
-         (save-silently t)
+         (node-box
+          ()
+          )
          (all-index-numbers          ; All index numbers in current subdirectory
           (cl-loop for node in (org-roam-node-list)
                    when (and (file-in-directory-p (org-roam-node-file node) (file-name-directory file))
+                             (org-roam-ql-nodes `(box ,node-box))
                              (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
                                       (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
                    collect (org-roam-folgezettel-list--retrieve-index node)))
