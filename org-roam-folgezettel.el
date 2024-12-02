@@ -949,6 +949,8 @@ Internally, calls `vtable-remove-object' on the vtable at point."
 ;;; Major mode and keymap
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
+  "p" #'previous-line
+  "n" #'next-line
   "SPC" #'scroll-up-command
   "DEL" #'scroll-down-command
   "q" #'quit-window
