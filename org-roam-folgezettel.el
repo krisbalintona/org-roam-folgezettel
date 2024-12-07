@@ -466,7 +466,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2))))
-    (display-buffer buf)
+    (select-window (display-buffer buf))
     buf))
 
 ;;;; Showing nodes
