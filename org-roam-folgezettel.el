@@ -472,22 +472,22 @@ See the bindings in `org-roam-folgezettel-table-map' below:
 ;;;; Showing nodes
 (defun org-roam-folgezettel-open-node (node &optional display-action no-select)
   "Open the NODE at point.
-If DISPLAY-ACTION is supplied, then use that function as the ACTION
-argument for the `display-buffer' function.
-
+If DISPLAY-ACTION is supplied, use it as the buffer display function.
 If NO-SELECT is supplied, then don't select the buffer."
   (interactive (list (vtable-current-object) nil) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
          (buf (find-file-noselect file))
-         (display-buffer-overriding-action
-          (list (or display-action 'display-buffer-same-window)))
-         (window (display-buffer buf)))
-    ;; FIXME 2024-11-14: Point is not moved when NO-SELECT is non-nil
-    (with-current-buffer buf
-      (goto-char location))
+         (window (display-buffer buf display-action)))
+    ;; Select the window unless NO-SELECT is true
     (unless no-select
-      (select-window window))))
+      (select-window window))
+    (with-current-buffer buf
+      (goto-char location)
+      (when-let* ((window (get-buffer-window buf)))
+        ;; We must call `set-window-point' to move point in the buffer to cover
+        ;; the case when NO-SELECT is non-nil
+        (set-window-point window location)))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
   "Show NODE in a new window, selected the buffer.
