@@ -478,6 +478,8 @@ If NO-SELECT is supplied, then don't select the buffer."
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
          (buf (find-file-noselect file))
+         (display-buffer-overriding-action
+          (unless display-action '(display-buffer-same-window)))
          (window (display-buffer buf display-action)))
     ;; Select the window unless NO-SELECT is true
     (unless no-select
