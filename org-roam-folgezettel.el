@@ -490,7 +490,10 @@ If NO-SELECT is supplied, then don't select the buffer."
             (goto-char location)
             ;; We must call `set-window-point' to move point in the buffer to
             ;; cover the case when NO-SELECT is non-nil
-            (set-window-point window location))
+            (set-window-point window location)
+            (when (org-fold-folded-p)
+              (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
+              (org-fold-show-context 'ancestors)))
         (message "Node point is outside the visible part of the buffer")))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
