@@ -483,11 +483,13 @@ If NO-SELECT is supplied, then don't select the buffer."
     (unless no-select
       (select-window window))
     (with-current-buffer buf
-      (goto-char location)
-      (when-let* ((window (get-buffer-window buf)))
-        ;; We must call `set-window-point' to move point in the buffer to cover
-        ;; the case when NO-SELECT is non-nil
-        (set-window-point window location)))))
+      (if (< (point-min) location (point-max))
+          (when-let* ((window (get-buffer-window buf)))
+            (goto-char location)
+            ;; We must call `set-window-point' to move point in the buffer to
+            ;; cover the case when NO-SELECT is non-nil
+            (set-window-point window location))
+        (message "Node point is outside the visible part of the buffer")))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
   "Show NODE in a new window, selected the buffer.
