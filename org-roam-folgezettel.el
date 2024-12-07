@@ -470,31 +470,45 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     buf))
 
 ;;;; Showing nodes
-(defun org-roam-folgezettel-open-node (node &optional display-action no-select)
+(defun org-roam-folgezettel-open-node (node &optional display-action no-select force-show-p)
   "Open the NODE at point.
+Show the NODE at point in its file and move the point to it.  If the
+point is on a folded region of the buffer, reveal its heading.  If it is
+not in the visible part of an open buffer, prompt if the user wants to
+widen the buffer and move the point to its location.
+
 If DISPLAY-ACTION is supplied, use it as the buffer display function.
-If NO-SELECT is supplied, then don't select the buffer."
-  (interactive (list (vtable-current-object) nil) org-roam-folgezettel-mode)
+
+If NO-SELECT is supplied, then don't select the buffer.
+
+If FORCE-SHOW-P is non-nil, then force moving the point to its heading
+even when the node is not in a visible part of the buffer."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
          (buf (find-file-noselect file))
          (display-buffer-overriding-action
           (unless display-action '(display-buffer-same-window)))
-         (window (display-buffer buf display-action)))
-    ;; Select the window unless NO-SELECT is true
-    (unless no-select
-      (select-window window))
-    (with-current-buffer buf
-      (if (< (point-min) location (point-max))
-          (when-let* ((window (get-buffer-window buf)))
+         (window (display-buffer buf display-action))
+         (goto-location-func
+          (lambda ()
             (goto-char location)
             ;; We must call `set-window-point' to move point in the buffer to
             ;; cover the case when NO-SELECT is non-nil
             (set-window-point window location)
             (when (org-fold-folded-p)
               (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
-              (org-fold-show-context 'ancestors)))
-        (message "Node point is outside the visible part of the buffer")))))
+              (org-fold-show-context 'ancestors)))))
+    ;; Select the window unless NO-SELECT is true
+    (unless no-select
+      (select-window window))
+    (with-current-buffer buf
+      (if (<= (point-min) location (point-max))
+          (funcall goto-location-func)
+        (when (or force-show-p
+                  (y-or-n-p "Node point is outside the visible part of the buffer.  Move point to node anyway?"))
+          (widen)
+          (funcall goto-location-func))))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
   "Show NODE in a new window, selected the buffer.
