@@ -514,6 +514,10 @@ Prompts for a new index for NODE.  If called interactively, NODE is the
 node at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((save-silently t)
+         ;; Just in case NODE is outdated (e.g., this function is called
+         ;; interactively on a vtable listing whose corresponding node has since
+         ;; been changed), we get the updated node from NODE's ID
+         (node (org-roam-node-from-id (org-roam-node-id node)))
          (file (org-roam-node-file node))
          (current-index (org-roam-folgezettel-list--retrieve-index node))
          (node-point (org-roam-node-point node))
