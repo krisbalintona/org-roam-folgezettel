@@ -960,7 +960,6 @@ If called interactively, NODE is the org-roam node at point."
          (buf (org-roam-folgezettel-list
                (org-roam-folgezettel--buffer-name-concat node-formatted))))
     (switch-to-buffer buf)
-    (goto-char (point-min))             ; Ensure point is in vtable
     (if (let* ((objects (vtable-objects (vtable-current-table)))
                (target
                 ;; We match by ID just in case there is a mismatch in any data
@@ -970,8 +969,12 @@ If called interactively, NODE is the org-roam node at point."
                          objects
                          :key #'org-roam-node-id
                          :test #'string=)))
+          (push-mark)
+          (goto-char (point-min))       ; Ensure point is in vtable
           (vtable-goto-object target))
-        (message "Going to %s..." node-formatted)
+        (progn
+          (message "Going to %s..." node-formatted)
+          (push-mark))
       (message "Could not find %s" node-formatted))))
 
 (defun org-roam-folgezettel-kill-line (node)
