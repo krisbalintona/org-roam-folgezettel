@@ -495,6 +495,7 @@ an indirect buffer."
     (let* ((window (display-buffer buf (list (or display-action 'display-buffer-same-window)))))
       ;; Select the window unless NO-SELECT is true
       (unless no-select
+        (org-mark-ring-push)
         (select-window window))
       (with-current-buffer buf
         (if (<= (point-min) location (point-max))
