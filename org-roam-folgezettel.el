@@ -470,45 +470,45 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     buf))
 
 ;;;; Showing nodes
-(defun org-roam-folgezettel-open-node (node &optional display-action no-select force-show-p)
-  "Open the NODE at point.
-Show the NODE at point in its file and move the point to it.  If the
-point is on a folded region of the buffer, reveal its heading.  If it is
-not in the visible part of an open buffer, prompt if the user wants to
-widen the buffer and move the point to its location.
+(defun org-roam-folgezettel-open-node (node &optional display-action no-select indirect-buffer-p)
+  "Open the NODE in its file and move point to its location.
+If NODE is in a folded or invisible region, reveal its heading.  If NODE
+is outside the visible part of the buffer, optionally open it in an
+indirect buffer.
 
-If DISPLAY-ACTION is supplied, use it as the buffer display function.
-
-If NO-SELECT is supplied, then don't select the buffer.
-
-If FORCE-SHOW-P is non-nil, then force moving the point to its heading
-even when the node is not in a visible part of the buffer."
+DISPLAY-ACTION specifies how to display the buffer.  NO-SELECT prevents
+selecting the buffer window.  INDIRECT-BUFFER-P forces opening NODE in
+an indirect buffer."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
-         (buf (find-file-noselect file))
-         (display-buffer-overriding-action
-          (unless display-action '(display-buffer-same-window)))
-         (window (display-buffer buf display-action))
-         (goto-location-func
-          (lambda ()
-            (goto-char location)
-            ;; We must call `set-window-point' to move point in the buffer to
-            ;; cover the case when NO-SELECT is non-nil
-            (set-window-point window location)
-            (when (org-fold-folded-p)
-              (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
-              (org-fold-show-context 'ancestors)))))
-    ;; Select the window unless NO-SELECT is true
-    (unless no-select
-      (select-window window))
+         (buf (find-file-noselect file)))
+    ;; Set buf to a widened indirect clone buffer if INDIRECT-BUFFER-P is
+    ;; non-nil or if requested by user
     (with-current-buffer buf
-      (if (<= (point-min) location (point-max))
-          (funcall goto-location-func)
-        (when (or force-show-p
-                  (y-or-n-p "Node point is outside the visible part of the buffer.  Move point to node anyway?"))
+      (when (or indirect-buffer-p
+                (and (not (<= (point-min) location (point-max)))
+                     (y-or-n-p "Node point is outside the visible part of the buffer.  Open in new indirect buffer?")))
+        (with-current-buffer (clone-indirect-buffer nil nil)
           (widen)
-          (funcall goto-location-func))))))
+          (setq buf (current-buffer)))))
+    (let* ((display-buffer-overriding-action
+            (unless display-action '(display-buffer-same-window)))
+           (window (display-buffer buf display-action)))
+      ;; Select the window unless NO-SELECT is true
+      (unless no-select
+        (select-window window))
+      (with-current-buffer buf
+        (if (<= (point-min) location (point-max))
+            (progn
+              (goto-char location)
+              ;; We must call `set-window-point' to move point in the buffer to
+              ;; cover the case when NO-SELECT is non-nil
+              (set-window-point window location)
+              (when (org-fold-folded-p)
+                (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
+                (org-fold-show-context 'ancestors)))
+          (message "Node is not in visible part of buffer. Not moving point"))))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
   "Show NODE in a new window, selected the buffer.
