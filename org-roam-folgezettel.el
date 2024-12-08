@@ -514,14 +514,14 @@ an indirect buffer."
 If called interactively, NODE is the node corresponding to the vtable
 object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (org-roam-folgezettel-open-node node 'display-buffer-pop-up-window))
+  (org-roam-folgezettel-open-node node '(display-buffer-pop-up-window)))
 
 (defun org-roam-folgezettel-display-node (node)
   "Show NODE in a new window without selected the buffer.
 If called interactively, NODE is the node corresponding to the vtable
 object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (org-roam-folgezettel-open-node node 'display-buffer-pop-up-window :no-select))
+  (org-roam-folgezettel-open-node node '(display-buffer-pop-up-window) :no-select))
 
 ;;;; Editing
 (defun org-roam-folgezettel-edit-index (node)
