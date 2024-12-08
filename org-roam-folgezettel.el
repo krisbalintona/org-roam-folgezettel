@@ -492,9 +492,7 @@ an indirect buffer."
         (with-current-buffer (clone-indirect-buffer nil nil)
           (widen)
           (setq buf (current-buffer)))))
-    (let* ((display-buffer-overriding-action
-            (unless display-action '(display-buffer-same-window)))
-           (window (display-buffer buf display-action)))
+    (let* ((window (display-buffer buf (or display-action 'display-buffer-same-window))))
       ;; Select the window unless NO-SELECT is true
       (unless no-select
         (select-window window))
