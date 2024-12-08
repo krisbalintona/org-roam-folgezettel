@@ -466,7 +466,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2))))
-    (select-window (display-buffer buf 'display-buffer-same-window))
+    (select-window (display-buffer buf '(display-buffer-same-window)))
     buf))
 
 ;;;; Showing nodes
@@ -492,7 +492,7 @@ an indirect buffer."
         (with-current-buffer (clone-indirect-buffer nil nil)
           (widen)
           (setq buf (current-buffer)))))
-    (let* ((window (display-buffer buf (or display-action 'display-buffer-same-window))))
+    (let* ((window (display-buffer buf (list (or display-action 'display-buffer-same-window)))))
       ;; Select the window unless NO-SELECT is true
       (unless no-select
         (select-window window))
@@ -958,23 +958,24 @@ If called interactively, NODE is the org-roam node at point."
   (let* ((node-formatted (org-roam-node-formatted node))
          (buf (org-roam-folgezettel-list
                (org-roam-folgezettel--buffer-name-concat node-formatted))))
-    (switch-to-buffer buf)
-    (if (let* ((objects (vtable-objects (vtable-current-table)))
-               (target
-                ;; We match by ID just in case there is a mismatch in any data
-                ;; between the actual node and the node data in the org-roam
-                ;; database
-                (cl-find (org-roam-node-id node)
-                         objects
-                         :key #'org-roam-node-id
-                         :test #'string=)))
-          (push-mark)
-          (goto-char (point-min))       ; Ensure point is in vtable
-          (vtable-goto-object target))
-        (progn
-          (message "Going to %s..." node-formatted)
-          (push-mark))
-      (message "Could not find %s" node-formatted))))
+    (display-buffer buf '(display-buffer-same-window))
+    (with-current-buffer buf
+      (if (let* ((objects (vtable-objects (vtable-current-table)))
+                 (target
+                  ;; We match by ID just in case there is a mismatch in any data
+                  ;; between the actual node and the node data in the org-roam
+                  ;; database
+                  (cl-find (org-roam-node-id node)
+                           objects
+                           :key #'org-roam-node-id
+                           :test #'string=)))
+            (push-mark)
+            (goto-char (point-min))       ; Ensure point is in vtable
+            (vtable-goto-object target))
+          (progn
+            (message "Going to %s..." node-formatted)
+            (push-mark))
+        (message "Could not find %s" node-formatted)))))
 
 (defun org-roam-folgezettel-kill-line (node)
   "Visually remove NODE from table at point.
