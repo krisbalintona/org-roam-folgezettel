@@ -470,15 +470,15 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     buf))
 
 ;;;; Showing nodes
-(defun org-roam-folgezettel-open-node (node &optional display-action no-select indirect-buffer-p)
+(defun org-roam-folgezettel-open-node (node &optional display-actions no-select indirect-buffer-p)
   "Open the NODE in its file and move point to its location.
 If NODE is in a folded or invisible region, reveal its heading.  If NODE
 is outside the visible part of the buffer, optionally open it in an
 indirect buffer.
 
-DISPLAY-ACTION specifies how to display the buffer.  NO-SELECT prevents
-selecting the buffer window.  INDIRECT-BUFFER-P forces opening NODE in
-an indirect buffer."
+DISPLAY-ACTIONS is a list of `display-buffer' actions.  NO-SELECT
+prevents selecting the buffer window.  INDIRECT-BUFFER-P forces opening
+NODE in an indirect buffer."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
@@ -492,7 +492,7 @@ an indirect buffer."
         (with-current-buffer (clone-indirect-buffer nil nil)
           (widen)
           (setq buf (current-buffer)))))
-    (let* ((window (display-buffer buf (list (or display-action 'display-buffer-same-window)))))
+    (let* ((window (display-buffer buf (or display-actions '(display-buffer-same-window)))))
       ;; Select the window unless NO-SELECT is true
       (unless no-select
         (org-mark-ring-push)
