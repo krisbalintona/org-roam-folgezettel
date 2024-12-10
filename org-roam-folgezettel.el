@@ -565,8 +565,7 @@ node at point."
             (org-set-property "ROAM_PLACE" new-index))
           (save-buffer)
           (org-roam-db-update-file file)
-          (message "Set index of %s to %s" (org-roam-node-title node) new-index)))
-      (vtable-update-object (vtable-current-table) node))))
+          (message "Set index of %s to %s" (org-roam-node-title node) new-index))))))
 
 ;;;; Filtering
 (defun org-roam-folgezettel-filter-undo ()
