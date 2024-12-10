@@ -35,11 +35,11 @@ Until this project is packaged into an official repository such as MELPA, users 
 
 * Roadmap
 
-+ [-] Filtering
++ [X] Filtering
   - [X] By subdirectory
-  - [ ] By arbitrary property
-  - [ ] By any predicate
-+ [ ] Navigation by index numbering
-  - [ ] Forward/backward same level
-  - [ ] Descend level
-  - [ ] Ascend level
+  - [X] By arbitrary property
+  - [X] By any predicate
++ [X] Navigation by index numbering
+  - [X] Forward/backward same level
+  - [X] Descend level
+  - [X] Ascend level
