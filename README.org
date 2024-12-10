@@ -1,6 +1,6 @@
 #+title: org-roam-folgezettel
 
-#  LocalWords:  Roadmap
+#  LocalWords:  Roadmap ql
 
 * Features
 
@@ -32,6 +32,12 @@ This project depends on the following third-party packages:
 + org-roam
 + org-roam-ql
 Until this project is packaged into an official repository such as MELPA, users will have to manually ensure these packages are installed prior to installing =org-roam-folgezettel=.
+
+* Commands
+
+** Filtering
+
++ ~org-roam-folgezettel-filter-menu~ :: Transient menu for filtering commands
 
 * Roadmap
 

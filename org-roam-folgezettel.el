@@ -30,6 +30,7 @@
 (require 'org-roam-node)
 (require 'org-roam-ql)
 (require 'seq)
+(require 'transient)
 
 ;;; Variables
 ;;;; Options
@@ -984,7 +985,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   (let ((inhibit-read-only t))
     (vtable-remove-object (vtable-current-table) node)))
 
-;;; Major mode and keymap
+;;; Major mode, keymap, and transient menus
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "p" #'previous-line
@@ -1014,6 +1015,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "C-k" #'org-roam-folgezettel-kill-line
   "C-/" #'org-roam-folgezettel-filter-undo
   "C-?" #'org-roam-folgezettel-filter-redo
+  "/ ?" #'org-roam-folgezettel-filter-menu
   "/ /" #'org-roam-folgezettel-filter-query-edit
   "/ d" #'org-roam-folgezettel-filter-directory
   "/ p" #'org-roam-folgezettel-filter-person
@@ -1032,6 +1034,22 @@ Internally, calls `vtable-remove-object' on the vtable at point."
                      (list 'org-roam-folgezettel-filter-query
                            '(:eval (format " [Query:%s]"
                                            (string-remove-suffix "," (string-trim (funcall org-roam-folgezettel-filter-indicator))))))))))
+
+(transient-define-prefix org-roam-folgezettel-filter-menu ()
+  "Transient menu for Org-Roam Folgezettel filters."
+  ["Filter By"
+   ["Index numbering"
+    ("c" "Children" org-roam-folgezettel-filter-children)
+    ("d" "Descendants" org-roam-folgezettel-filter-descendants)]
+   ["Other"
+    ("s" "Directory" org-roam-folgezettel-filter-directory)
+    ("p" "Person" org-roam-folgezettel-filter-person)
+    ("t" "Tags" org-roam-folgezettel-filter-tags)
+    ("r" "Title" org-roam-folgezettel-filter-title)]]
+  ["Modify filter query"
+   [("e" "Edit query" org-roam-folgezettel-filter-query-edit)
+    ("U" "Forward in history" org-roam-folgezettel-filter-redo)
+    ("u" "Backward in history" org-roam-folgezettel-filter-undo)]])
 
 ;;; Provide
 (provide 'org-roam-folgezettel)
