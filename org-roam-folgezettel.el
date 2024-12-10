@@ -886,11 +886,13 @@ The benefit of using this command over isearch of consult.el's
 or different information (possibly in bespoke formatting) than the
 columns in the `org-roam-folgezettel-mode' table."
   (interactive nil org-roam-folgezettel-mode)
-  (when (vtable-goto-object (org-roam-node-read
-                             nil
-                             (lambda (node) (member node (vtable-objects (vtable-current-table))))
-                             nil t "Go to node: "))
-    (push-mark)))
+  (let ((table-nodes (vtable-objects (vtable-current-table)))
+        (initial-point (point)))
+    (when (vtable-goto-object (org-roam-node-read
+                               nil
+                               (lambda (node) (member node table-nodes))
+                               nil t "Go to node: "))
+      (push-mark initial-point :nomsg))))
 
 ;;;; Moving nodes
 (defun org-roam-folgezettel-move-down (nlines)
