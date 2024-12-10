@@ -974,9 +974,7 @@ If called interactively, NODE is the org-roam node at point."
             (push-mark)
             (goto-char (point-min))       ; Ensure point is in vtable
             (vtable-goto-object target))
-          (progn
-            (message "Going to %s..." node-formatted)
-            (push-mark))
+          (message "Going to %s..." node-formatted)
         (message "Could not find %s" node-formatted)))))
 
 (defun org-roam-folgezettel-kill-line (node)
