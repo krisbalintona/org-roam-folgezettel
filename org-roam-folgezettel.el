@@ -377,7 +377,11 @@ Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
   (let ((org-roam-folgezettel-filter-query
          (or org-roam-folgezettel-filter-query (org-roam-node-list))))
-    (org-roam-ql-nodes org-roam-folgezettel-filter-query "index")))
+    (or (org-roam-ql-nodes org-roam-folgezettel-filter-query "index")
+        (prog1
+            (sort (org-roam-node-list)
+                  :lessp 'org-roam-folgezettel--node-index-lessp)
+          (message "Query yields no results! Showing all nodes instead.")))))
 
 (defun org-roam-folgezettel-list--getter (node column vtable)
   "Getter for vtable objects.
