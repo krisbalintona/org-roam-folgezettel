@@ -22,7 +22,7 @@ The vision of this package is my way of mitigating the difference between interf
 :ID:       20250312T182447.793301
 :END:
 
-#+CAPTION: Listing of a portion of my Zettelkasten nodes via ~M-x org-roam-folgezettel-list~.
+Listing of a portion of my Zettelkasten nodes via ~M-x org-roam-folgezettel-list~.
 [[file:screenshots/screenshot_1.png]]
 
 * Installation
