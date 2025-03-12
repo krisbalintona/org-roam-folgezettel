@@ -1,6 +1,6 @@
 #+title: org-roam-folgezettel
 
-#  LocalWords:  Roadmap ql
+#  LocalWords:  Roadmap ql folgezettel Composability folgezettel's
 
 * Features
 
@@ -9,7 +9,9 @@
   - By subdirectory
   - By index numbering and index number relations (e.g. parent, children, descendants, etc.)
   - By tags
-+ Movement by index numbering (e.g. up parent, down to child, forward/backward siblings)
+  - By folgezettel relations (e.g., children, descendants, parent)
+  - Composability of filters (e.g., AND, OR)
++ Movement by folgezettel relations (e.g., up parent, down to child, forward/backward siblings)
 
 * Installation
 
@@ -33,19 +35,39 @@ This project depends on the following third-party packages:
 + org-roam-ql
 Until this project is packaged into an official repository such as MELPA, users will have to manually ensure these packages are installed prior to installing =org-roam-folgezettel=.
 
+* Options
+
+Users can see all available options with ~M-x customize-group RET org-roam-folgezettel RET~, or ~C-u C-h u org-roam-folgezettel- RET~.
+
 * Commands
+
+An org-roam-folgezettel listing of all org-roam nodes is available with ~M-x org-roam-folgezettel-list~. This command is left unbound by default.
+
+For a full listing of org-roam-folgezettel's commands, see the output of ~C-h a org-roam-folgezettel- RET~.
 
 ** Filtering
 
+Below are a list of the filtering commands currently available.
 + ~org-roam-folgezettel-filter-menu~ :: Transient menu for filtering commands
++ ~org-roam-folgezettel-filter-query-edit~ :: Manually modify the filter for the current org-roam-folgezettel buffer.
++ ~org-roam-folgezettel-filter-directory~ :: Filter the current buffer's node listing to SUBDIR.
++ ~org-roam-folgezettel-filter-title~ :: Filter the current node titles by REGEXP.
++ ~org-roam-folgezettel-filter-tags~ :: Filter the current node listing by TAGS.
++ ~org-roam-folgezettel-filter-person~ :: Filter the current node listing by PERSON.
++ ~org-roam-folgezettel-filter-children~ :: Filter the current node listing to the children of NODE.
++ ~org-roam-folgezettel-filter-descendants~ :: Filter the current node listing to the descendants of NODE.
++ ~org-roam-folgezettel-filter-undo~ :: Apply previous filter query in history.
++ ~org-roam-folgezettel-filter-redo~ :: Apply next filter query in history.
 
 * Roadmap
 
 + [X] Filtering
   - [X] By subdirectory
-  - [X] By arbitrary property
-  - [X] By any predicate
+  - [X] By various property
+  - [X] By various predicates
+  - [X] History (undo, redo)
+  - [X] By index numbering (folgezettel) relations (e.g., to children, descendants, parent)
 + [X] Navigation by index numbering
-  - [X] Forward/backward same level
-  - [X] Descend level
-  - [X] Ascend level
+  - [X] Forward/backward same level (sibling)
+  - [X] Descend level (first child)
+  - [X] Ascend level (parent)
