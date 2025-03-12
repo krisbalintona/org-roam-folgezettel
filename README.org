@@ -17,6 +17,14 @@ The vision of this package is my way of mitigating the difference between interf
   - Composability of filters (e.g., AND, OR)
 + Movement by folgezettel relations (e.g., up parent, down to child, forward/backward siblings)
 
+* Screenshots
+:PROPERTIES:
+:ID:       20250312T182447.793301
+:END:
+
+#+CAPTION: Listing of a portion of my Zettelkasten nodes via ~M-x org-roam-folgezettel-list~.
+[[file:screenshots/screenshot_1.png]]
+
 * Installation
 
 This project is currently not packaged in any official package repositories. Consequently, users will have to manually install this package.
@@ -39,7 +47,7 @@ This project depends on the following third-party packages:
 + org-roam-ql
 Until this project is packaged into an official repository such as MELPA, users will have to manually ensure these packages are installed prior to installing =org-roam-folgezettel=.
 
-* Options
+* User options
 
 Users can see all available options with ~M-x customize-group RET org-roam-folgezettel RET~, or ~C-u C-h u org-roam-folgezettel- RET~.
 
