@@ -1,12 +1,31 @@
+# -*- eval: (add-hook 'before-save-hook 'org-make-toc); -*-
 #+title: org-roam-folgezettel
 
 #  LocalWords:  Roadmap ql folgezettel Composability folgezettel's
 
-This package is a progression of [[https://github.com/krisbalintona/denote-zettel-interface][krisbalintona/denote-zettel-interface]], which the author initially relied on while using denote instead of org-roam. 
+This package is a progression of [[https://github.com/krisbalintona/denote-zettel-interface][krisbalintona/denote-zettel-interface]], which the author initially relied on while using denote instead of org-roam.
 
 The vision of this package is my way of mitigating the difference between interfacing with a digital Zettelkasten and filing through a physical Zettelkasten. The approach of org-roam-folgezettel is to represent the folgezettel index in a list format (with =vtable.el=) and be able to navigate the index according to the numbering of notes and filter the shown notes arbitrarily (including by parents and siblings of a folgezettel index numbering).
 
+* Table of Contents
+:PROPERTIES:
+:TOC:      :include all :force (nothing) :ignore (this) :local (nothing)
+:END:
+
+:CONTENTS:
+- [[#features][Features]]
+- [[#screenshots][Screenshots]]
+- [[#installation][Installation]]
+- [[#user-options][User options]]
+- [[#commands][Commands]]
+  - [[#filtering][Filtering]]
+- [[#roadmap][Roadmap]]
+:END:
+
 * Features
+:PROPERTIES:
+:CUSTOM_ID: features
+:END:
 
 + List all org-roam nodes using ~vtable.el~
 + Filtering results
@@ -20,12 +39,16 @@ The vision of this package is my way of mitigating the difference between interf
 * Screenshots
 :PROPERTIES:
 :ID:       20250312T182447.793301
+:CUSTOM_ID: screenshots
 :END:
 
 Listing of a portion of my Zettelkasten nodes via ~M-x org-roam-folgezettel-list~.
 [[file:screenshots/screenshot_1.png]]
 
 * Installation
+:PROPERTIES:
+:CUSTOM_ID: installation
+:END:
 
 This project is currently not packaged in any official package repositories. Consequently, users will have to manually install this package.
 
@@ -48,16 +71,25 @@ This project depends on the following third-party packages:
 Until this project is packaged into an official repository such as MELPA, users will have to manually ensure these packages are installed prior to installing =org-roam-folgezettel=.
 
 * User options
+:PROPERTIES:
+:CUSTOM_ID: user-options
+:END:
 
 Users can see all available options with ~M-x customize-group RET org-roam-folgezettel RET~, or ~C-u C-h u org-roam-folgezettel- RET~.
 
 * Commands
+:PROPERTIES:
+:CUSTOM_ID: commands
+:END:
 
 An org-roam-folgezettel listing of all org-roam nodes is available with ~M-x org-roam-folgezettel-list~. This command is left unbound by default.
 
 For a full listing of org-roam-folgezettel's commands, see the output of ~C-h a org-roam-folgezettel- RET~.
 
 ** Filtering
+:PROPERTIES:
+:CUSTOM_ID: filtering
+:END:
 
 Below are a list of the filtering commands currently available.
 + ~org-roam-folgezettel-filter-menu~ :: Transient menu for filtering commands
@@ -72,6 +104,9 @@ Below are a list of the filtering commands currently available.
 + ~org-roam-folgezettel-filter-redo~ :: Apply next filter query in history.
 
 * Roadmap
+:PROPERTIES:
+:CUSTOM_ID: roadmap
+:END:
 
 + [X] Filtering
   - [X] By subdirectory
