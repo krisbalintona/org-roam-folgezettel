@@ -1,4 +1,4 @@
-# -*- eval: (add-hook 'before-save-hook 'org-make-toc); -*-
+# -*- eval: (org-make-toc-mode 1); -*-
 #+title: org-roam-folgezettel
 
 #  LocalWords:  Roadmap ql folgezettel Composability folgezettel's
@@ -38,7 +38,6 @@ The vision of this package is my way of mitigating the difference between interf
 
 * Screenshots
 :PROPERTIES:
-:ID:       20250312T182447.793301
 :CUSTOM_ID: screenshots
 :END:
 
