@@ -63,6 +63,25 @@ every fresh `org-roam-folgezettel-mode' buffer."
 
 ;;;; Faces
 
+;;;; History
+(defvar org-roam-folgezettel-filter-query-edit-history (list)
+  "History for the `org-roam-folgezettel-filter-query-edit' command.")
+
+(defvar org-roam-folgezettel-filter-directory-history (list)
+  "History for the `org-roam-folgezettel-filter-directory' command.")
+
+(defvar org-roam-folgezettel-filter-person-history (list)
+  "History for the `org-roam-folgezettel-filter-person' command.")
+
+(defvar org-roam-folgezettel-filter-title-history (list)
+  "History for the `org-roam-folgezettel-filter-title' command.")
+
+(defvar org-roam-folgezettel-filter-tags-history (list)
+  "History for the `org-roam-folgezettel-filter-tags' command.")
+
+(defvar org-roam-folgezettel-edit-index-history (list)
+  "History for the `org-roam-folgezettel-edit-index' command.")
+
 ;;;; Internal
 (defvar org-roam-folgezettel-filter-indicator ""
   "Mode line indicator for current filter.
@@ -567,6 +586,7 @@ node at point."
             (widen)
             (goto-char node-point)
             (org-roam-node-at-point 'assert)
+            (add-to-history 'org-roam-folgezettel-edit-index-history new-index)
             (org-set-property "ROAM_PLACE" new-index))
           (save-buffer)
           (org-roam-db-update-file file)
@@ -614,7 +634,8 @@ Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "New filter query: "
-                                  (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query)))
+                                  (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query))
+                                  'org-roam-folgezettel-filter-query-edit-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (org-roam-folgezettel-filter--modify
@@ -638,7 +659,8 @@ Other filtering commands are available in
   (interactive (list (completing-read "Subdirectory: "
                                       (mapcar (lambda (dir) (file-relative-name dir org-roam-directory))
                                               (seq-filter #'file-directory-p
-                                                          (directory-files org-roam-directory t "^[^.]" t))))
+                                                          (directory-files org-roam-directory t "^[^.]" t)))
+                                      nil t nil 'org-roam-folgezettel-filter-directory-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((subdir (string-trim subdir "/" "/"))
@@ -665,7 +687,8 @@ applied.
 Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
-  (interactive (list (read-string "Filter by the following person: ")
+  (interactive (list (read-string "Filter by the following person: "
+                                  nil 'org-roam-folgezettel-filter-person-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((new-query (if org-roam-folgezettel-filter-query
@@ -689,7 +712,8 @@ applied.
 Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
-  (interactive (list (read-regexp "Regexp to filter titles by: ")
+  (interactive (list (read-regexp "Regexp to filter titles by: "
+                                  nil 'org-roam-folgezettel-filter-title-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((new-query (if org-roam-folgezettel-filter-query
@@ -714,7 +738,9 @@ Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
-                       (mapconcat #'identity (completing-read-multiple "Tag(s): " (org-roam-tag-completions))))
+                       (mapconcat #'identity
+                                  (completing-read-multiple "Tag(s): " (org-roam-tag-completions)
+                                                            nil nil nil 'org-roam-folgezettel-filter-tags-history)))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((new-query (if org-roam-folgezettel-filter-query
