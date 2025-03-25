@@ -738,15 +738,14 @@ Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (let ((crm-separator "[    ]*:[    ]*"))
-                       (mapconcat #'identity
-                                  (completing-read-multiple "Tag(s): " (org-roam-tag-completions)
-                                                            nil nil nil 'org-roam-folgezettel-filter-tags-history)))
+                       (completing-read-multiple "Tag(s): " (org-roam-tag-completions)
+                                                 nil nil nil 'org-roam-folgezettel-filter-tags-history))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
   (let ((new-query (if org-roam-folgezettel-filter-query
                        `(and ,org-roam-folgezettel-filter-query
-                             (tags ,tags))
-                     `(tags ,tags))))
+                             ,(flatten-list `(tags ,tags)))
+                     (flatten-list `(tags ,tags)))))
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
