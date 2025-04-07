@@ -5,7 +5,7 @@
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
 ;; URL: https://github.com/krisbalintona/org-roam-folgezettel
 ;; Keywords: files, text, convenience
-;; Version: 0.2.3
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "29.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -388,6 +388,18 @@ has children indexed as 1.1, 1.2, and 1.3, the first child is 1.1."
       (not (cl-member-if-not
             (lambda (part) (or (string= part "1") (string= part "a")))
             (org-roam-folgezettel--index-split (string-remove-prefix index-query index-value)))))))
+
+(org-roam-ql-defpred 'in-org-buffer
+  "A predicate for the nodes in a given org-mode buffer.
+Accepts either a buffer object or a buffer name.
+
+The reason we define this predicate is because org-roam-ql's
+\"in-buffer\" expansion accepts only `org-roam-mode' and
+`org-agenda-mode' buffers."
+  #'org-roam-node-file
+  (lambda (file-value buf-query)
+    (let ((file-query (buffer-file-name (get-buffer buf-query))))
+      (string-equal (expand-file-name file-value) (expand-file-name file-query)))))
 
 ;;;;; Composition of vtable
 (defun org-roam-folgezettel-list--objects ()
@@ -810,6 +822,38 @@ Other filtering commands are available in
        (org-roam-folgezettel--buffer-name-concat new-query)))
     (message "Filtered nodes to the descendants of %s" (org-roam-node-formatted node))))
 
+(defun org-roam-folgezettel-filter-buffer (buffer new-buffer-p)
+  "Filter the current node listing to nodes in FILE.
+BUFFER is either a buffer name or a buffer object.
+
+If called interactively, prompts for the file to filter by.
+
+If NEW-BUFFER-P is non-nil, then apply this filter to a new
+`org-roam-folgezettel-mode' buffer named according to the filter
+applied.
+
+Other filtering commands are available in
+`org-roam-folgezettel-table-map':
+\\{org-roam-folgezettel-mode-map}"
+  (interactive (list (read-buffer "Which buffer's nodes? " (current-buffer) t
+                                  (lambda (b)
+                                    (let ((buf (get-buffer (if (stringp b) b (car b)))))
+                                      (eq 'org-mode (buffer-local-value 'major-mode buf)))))
+                     current-prefix-arg)
+               org-roam-folgezettel-mode)
+  (let* ((new-query (if org-roam-folgezettel-filter-query
+                        `(and ,org-roam-folgezettel-filter-query
+                              (in-org-buffer ,buffer))
+                      `(in-org-buffer ,buffer))))
+    (org-roam-folgezettel-filter--modify
+     new-query
+     (when new-buffer-p
+       (org-roam-folgezettel--buffer-name-concat new-query)))
+    (message "Filtered nodes to those in %s"
+             (cond ((stringp buffer) buffer)
+                   ((bufferp buffer) (buffer-name buffer))
+                   (_ (error "BUFFER should be a buffer name or buffer object"))))))
+
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
   "Move point to DIST parents upward in the vtable.
@@ -1050,6 +1094,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "/ p" #'org-roam-folgezettel-filter-person
   "/ t" #'org-roam-folgezettel-filter-tags
   "/ n" #'org-roam-folgezettel-filter-title
+  "/ b" #'org-roam-folgezettel-filter-buffer
   "/ i c" #'org-roam-folgezettel-filter-children
   "/ i d" #'org-roam-folgezettel-filter-descendants)
 
@@ -1074,7 +1119,8 @@ Internally, calls `vtable-remove-object' on the vtable at point."
     ("s" "Directory" org-roam-folgezettel-filter-directory)
     ("p" "Person" org-roam-folgezettel-filter-person)
     ("t" "Tags" org-roam-folgezettel-filter-tags)
-    ("r" "Title" org-roam-folgezettel-filter-title)]]
+    ("r" "Title" org-roam-folgezettel-filter-title)
+    ("b" "Buffer" org-roam-folgezettel-filter-buffer)]]
   ["Modify filter query"
    [("e" "Edit query" org-roam-folgezettel-filter-query-edit)
     ("U" "Forward in history" org-roam-folgezettel-filter-redo)
