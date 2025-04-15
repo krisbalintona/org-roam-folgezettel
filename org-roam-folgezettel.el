@@ -5,7 +5,7 @@
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
 ;; URL: https://github.com/krisbalintona/org-roam-folgezettel
 ;; Keywords: files, text, convenience
-;; Version: 0.3.0
+;; Version: 0.3.1
 ;; Package-Requires: ((emacs "29.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -437,6 +437,33 @@ names:
           'face 'org-tag)
          ""))))
 
+(defun org-roam-folgezettel-list--displayer (fvalue _index max-pixel-width _table)
+  "Displayer for vtable objects.
+In TABLE, given the column whose index is INDEX, truncates FVALUE to
+have a pixel width of MAX-PIXEL-WIDTH if its pixel width is larger than
+MAX-PIXEL-WIDTH.
+
+The difference between this function and the default displayer
+function (see `vtable--insert-line' and `vtable--limit-string') is that
+it avoids calling `string-pixel-width', which is a computationally
+expensive function.  Instead, to increase performance at the cost of
+potentially inaccuracies with ligatures and emojis (whose pixel width
+may not be proportional to the length of the fvalue)."
+  (let* ((low 0)
+         (high (length fvalue))
+         (last-good 0))
+    ;; Perform a binary search.  This is more performant than iterating
+    ;; through each character in sequence.
+    (while (<= low high)
+      (let* ((mid (floor (+ low high) 2))
+             (substr (substring fvalue 0 mid))
+             (width (string-pixel-width substr)))
+        (if (<= width max-pixel-width)
+            (setq low (1+ mid)
+                  last-good mid)
+          (setq high (1- mid)))))
+    (substring fvalue 0 last-good)))
+
 ;;; Commands
 ;;;###autoload
 (defun org-roam-folgezettel-list (&optional buf-name filter-query)
@@ -493,7 +520,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                         ;; better comparability with `display-buffer-alist',
                         ;; ideally the major mode must also be set before
                         ;; creating the table.
-                        :width 130
+                        ;; :width 130
                         :formatter org-roam-folgezettel--path-formatter)
                       ( :name "Tags"
                         :align right
@@ -501,7 +528,9 @@ See the bindings in `org-roam-folgezettel-table-map' below:
            :keymap org-roam-folgezettel-table-map
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
-           :separator-width 2))))
+           :displayer #'org-roam-folgezettel-list--displayer
+           :separator-width 2
+           :use-header-line t))))
     (select-window (display-buffer buf '(display-buffer-same-window)))
     buf))
 
