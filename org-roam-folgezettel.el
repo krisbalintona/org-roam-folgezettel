@@ -5,8 +5,8 @@
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
 ;; URL: https://github.com/krisbalintona/org-roam-folgezettel
 ;; Keywords: files, text, convenience
-;; Version: 0.3.1
-;; Package-Requires: ((emacs "29.1"))
+;; Version: 0.3.2
+;; Package-Requires: ((emacs "29.1") (org-roam-ql "0.3-pre"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
