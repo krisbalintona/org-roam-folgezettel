@@ -408,10 +408,9 @@ Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
   (let ((org-roam-folgezettel-filter-query
          (or org-roam-folgezettel-filter-query (org-roam-node-list))))
-    (or (org-roam-ql-nodes org-roam-folgezettel-filter-query "index")
+    (or (org-roam-ql-nodes org-roam-folgezettel-filter-query)
         (prog1
-            (sort (org-roam-node-list)
-                  :lessp 'org-roam-folgezettel--node-index-lessp)
+            (org-roam-node-list)
           (message "Query yields no results! Showing all nodes instead.")))))
 
 (defun org-roam-folgezettel-list--getter (node column vtable)
@@ -510,8 +509,10 @@ See the bindings in `org-roam-folgezettel-table-map' below:
           ;; `org-roam-folgezettel-filter-query'
           (make-vtable
            :columns '(( :name "Index"
+                        :primary ascend
                         :align left
-                        :formatter org-roam-folgezettel--index-formatter)
+                        :formatter org-roam-folgezettel--index-formatter
+                        :comparator org-roam-folgezettel--index-lessp)
                       ( :name "Path"
                         :align left
                         ;; TODO 2024-11-10: Figure out how to use a percentage.
