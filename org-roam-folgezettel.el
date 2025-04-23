@@ -174,13 +174,6 @@ Handles mixed numeric and alphabetic components in index parts."
       ;; If we loop through all parts without difference, they are equal
       nil)))
 
-(defun org-roam-folgezettel--node-index-lessp (node1 node2)
-  "Compare the indices of NODE1 and NODE2.
-See the docstring of `org-roam-folgezettel--index-lessp'."
-  (let ((index1 (org-roam-folgezettel-list--retrieve-index node1))
-        (index2 (org-roam-folgezettel-list--retrieve-index node2)))
-    (org-roam-folgezettel--index-lessp index1 index2)))
-
 ;;;; Filter queries
 (defun org-roam-folgezettel-filter--modify (query new-buffer)
   "Modify the filter for the current buffer and update listing.
@@ -303,7 +296,14 @@ INDEX2 is \"1.1a\", but returns nil when INDEX1 is \"1.1\" and INDEX2 is
     (and (<= (length index1-parts) (length index2-parts))
          (cl-every #'equal index1-parts (cl-subseq index2-parts 0 (length index1-parts))))))
 
-;;;;;; Sorting functions
+;;;;;; Index sorter
+(defun org-roam-folgezettel--node-index-lessp (node1 node2)
+  "Compare the indices of NODE1 and NODE2.
+See the docstring of `org-roam-folgezettel--index-lessp'."
+  (let ((index1 (org-roam-folgezettel-list--retrieve-index node1))
+        (index2 (org-roam-folgezettel-list--retrieve-index node2)))
+    (org-roam-folgezettel--index-lessp index1 index2)))
+
 (org-roam-ql-register-sort-fn "index" #'org-roam-folgezettel--node-index-lessp)
 
 ;;;;;; Node predicates
