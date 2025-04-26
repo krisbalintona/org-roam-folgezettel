@@ -502,7 +502,13 @@ See the bindings in `org-roam-folgezettel-table-map' below:
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2
-           :use-header-line t))))
+           :use-header-line t
+           ;; Every refresh of the vtable, meaning "identical" nodes are the
+           ;; same (`eq').  We would use `equal', but sometimes we change the
+           ;; data of a node (e.g. its tags), making that a new node.
+           ;; Oftentimes, we don't want such nodes to be considered unequal, so
+           ;; instead we use the node ID.
+           :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))))))
     (select-window (display-buffer buf '(display-buffer-same-window)))
     buf))
 
