@@ -485,20 +485,19 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                         :primary ascend
                         :align left
                         :formatter org-roam-folgezettel--index-formatter
-                        :comparator org-roam-folgezettel--index-lessp)
+                        :comparator org-roam-folgezettel--index-lessp
+                        :max-width "10%"
+                        :truncate-guess-tolerance 0)
                       ( :name "Path"
                         :align left
-                        ;; TODO 2024-11-10: Figure out how to use a percentage.
-                        ;; I think setting a percentage only works if the table
-                        ;; is called in a visible buffer.  Additionally, for
-                        ;; better comparability with `display-buffer-alist',
-                        ;; ideally the major mode must also be set before
-                        ;; creating the table.
-                        ;; :width 130
-                        :formatter org-roam-folgezettel--path-formatter)
+                        :max-width "75%"
+                        :formatter org-roam-folgezettel--path-formatter
+                        :truncate-guess-tolerance 0)
                       ( :name "Tags"
                         :align right
-                        :formatter org-roam-folgezettel--tags-formatter))
+                        :formatter org-roam-folgezettel--tags-formatter
+                        :max-width "30%"
+                        :truncate-guess-tolerance 0))
            :keymap org-roam-folgezettel-table-map
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
