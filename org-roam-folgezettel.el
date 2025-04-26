@@ -881,7 +881,7 @@ Other filtering commands are available in
     (message "Filtered nodes to those in %s"
              (cond ((stringp buffer) buffer)
                    ((bufferp buffer) (buffer-name buffer))
-                   (_ (error "BUFFER should be a buffer name or buffer object"))))))
+                   (t (error "BUFFER should be a buffer name or buffer object"))))))
 
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
