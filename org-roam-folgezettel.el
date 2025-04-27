@@ -585,6 +585,32 @@ object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (org-roam-folgezettel-open-node node '(display-buffer-pop-up-window) :no-select))
 
+;;;###autoload
+(defun org-roam-folgezettel-show-node-in-list (node)
+  "Opens NODE in a new `org-roam-folgezettel-mode' buffer.
+If called interactively, NODE is the org-roam node at point."
+  (interactive (list (or (vtable-current-object) (org-roam-node-at-point :assert)))
+               org-mode org-roam-folgezettel-mode)
+  (let* ((node-formatted (org-roam-node-formatted node))
+         (buf (org-roam-folgezettel-list
+               (org-roam-folgezettel--buffer-name-concat node-formatted))))
+    (display-buffer buf '(display-buffer-same-window))
+    (with-current-buffer buf
+      (if (let* ((objects (vtable-objects (vtable-current-table)))
+                 (target
+                  ;; We match by ID just in case there is a mismatch in any data
+                  ;; between the actual node and the node data in the org-roam
+                  ;; database
+                  (cl-find (org-roam-node-id node)
+                           objects
+                           :key #'org-roam-node-id
+                           :test #'string=)))
+            (push-mark)
+            (goto-char (point-min))       ; Ensure point is in vtable
+            (vtable-goto-object target))
+          (message "Going to %s..." node-formatted)
+        (message "Could not find %s" node-formatted)))))
+
 ;;;; Marking
 
 (defun org-roam-folgezettel-mark (node)
@@ -1095,32 +1121,6 @@ provided."
                 (plist-get org-store-link-plist :description))
           org-stored-links)
     (message "Stored link to %s!" description)))
-
-;;;###autoload
-(defun org-roam-folgezettel-show-node-in-list (node)
-  "Opens NODE in a new `org-roam-folgezettel-mode' buffer.
-If called interactively, NODE is the org-roam node at point."
-  (interactive (list (or (vtable-current-object) (org-roam-node-at-point :assert)))
-               org-mode org-roam-folgezettel-mode)
-  (let* ((node-formatted (org-roam-node-formatted node))
-         (buf (org-roam-folgezettel-list
-               (org-roam-folgezettel--buffer-name-concat node-formatted))))
-    (display-buffer buf '(display-buffer-same-window))
-    (with-current-buffer buf
-      (if (let* ((objects (vtable-objects (vtable-current-table)))
-                 (target
-                  ;; We match by ID just in case there is a mismatch in any data
-                  ;; between the actual node and the node data in the org-roam
-                  ;; database
-                  (cl-find (org-roam-node-id node)
-                           objects
-                           :key #'org-roam-node-id
-                           :test #'string=)))
-            (push-mark)
-            (goto-char (point-min))       ; Ensure point is in vtable
-            (vtable-goto-object target))
-          (message "Going to %s..." node-formatted)
-        (message "Could not find %s" node-formatted)))))
 
 (defun org-roam-folgezettel-kill-line (node)
   "Visually remove NODE from table at point.
