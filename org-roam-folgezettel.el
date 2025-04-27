@@ -442,7 +442,7 @@ names:
 
 ;;; Commands
 ;;;###autoload
-(defun org-roam-folgezettel-list (&optional buf-name filter-query)
+(defun org-roam-folgezettel-list (&optional buf-name filter-query display-buffer-action)
   "List org-roam nodes with vtable.el.
 The first optional argument is NEW-BUFFER:
 - If BUF-NAME is a string, that will be the name of the buffer created.  If a
@@ -457,9 +457,18 @@ A second optional argument is available: FILTER-QUERY.  If FILTER-QUERY
 is supplied, use that form (see `org-roam-ql-nodes') to filter the nodes
 list.
 
+A third and final optional argument is available: DISPLAY-BUFFER-ACTION.
+DISPLAY-BUFFER-ACTION is the action passed to `display-buffer'; it must
+be a list, satisfying the description provided by `display-buffer's
+docstring.  By default, the buffer is displayed in the same window in
+which this function is called.  (NOTE: Due to bug#69837,
+DISPLAY-BUFFER-ACTION must be a display buffer action that renders the
+buffer visible.  Otherwise, the widths of columns will not be correctly
+calculated during the initial creation of the vtable.)
+
 See the bindings in `org-roam-folgezettel-table-map' below:
 \\{org-roam-folgezettel-mode-map}"
-  (interactive (list current-prefix-arg nil))
+  (interactive (list current-prefix-arg nil '(display-buffer-same-window)))
   (setq buf-name
         (cond
          ((stringp buf-name) buf-name)
@@ -471,7 +480,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     ;; representations can only be properly calculated when the buffer the
     ;; vtable is created on is currently visible.  Therefore, we must switch to
     ;; a buffer then create the vtable.
-    (with-selected-window (select-window (display-buffer buf '(display-buffer-same-window)))
+    (with-selected-window (select-window (display-buffer buf display-buffer-action))
       (let ((inhibit-read-only t))
         ;; Only insert vtable and set buffer-local values if the buffer doesn't
         ;; already have one
