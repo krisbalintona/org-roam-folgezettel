@@ -467,7 +467,11 @@ See the bindings in `org-roam-folgezettel-table-map' below:
           (generate-new-buffer-name org-roam-folgezettel-default-buffer-name))
          ((not buf-name) org-roam-folgezettel-default-buffer-name)))
   (let ((buf (get-buffer-create buf-name)))
-    (with-current-buffer buf
+    ;; NOTE: Due to a limitation in vtable (see bug#69837), the width of object
+    ;; representations can only be properly calculated when the buffer the
+    ;; vtable is created on is currently visible.  Therefore, we must switch to
+    ;; a buffer then create the vtable.
+    (with-selected-window (select-window (display-buffer buf '(display-buffer-same-window)))
       (let ((inhibit-read-only t))
         ;; Only insert vtable and set buffer-local values if the buffer doesn't
         ;; already have one
