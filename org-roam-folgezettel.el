@@ -214,7 +214,7 @@ function returns \"*foo [bar]*\"."
          (string-trim org-roam-folgezettel-default-buffer-name "*" "*")))
     (format "*%s [%s]*" trimmed-default query)))
 
-;;;; Vtable
+;;;; Making the vtable
 ;;;;; Retrieving values
 (defun org-roam-folgezettel-list--retrieve-index (node)
   "Retrieve the index number of NODE.
