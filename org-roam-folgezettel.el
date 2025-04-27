@@ -544,7 +544,10 @@ indirect buffer.
 DISPLAY-ACTIONS is a list that the ACTION parameter of `display-buffer'
 accepts.
 
-NO-SELECT prevents selecting the window of the node's buffer.
+When NO-SELECT is nil, open the buffer in a window and push the current
+point this function was called from to `org-mark-ring'.  When NO-SELECT
+is non-nil, do not select the window of the node's buffer and do not
+push the current point to `org-mark-ring'.
 
 When INDIRECT-BUFFER-P IS t forces opening NODE in an indirect buffer,
 whereas normally an indirect buffer is created only when the node is in
@@ -555,34 +558,36 @@ created anyway."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
-         (buf (find-file-noselect file)))
-    ;; Set buf to a widened indirect clone buffer if INDIRECT-BUFFER-P is
-    ;; non-nil or if accepted by user prompt, which is only shown if
-    ;; INDIRECT-BUFFER-P is not 'accept
+         (buf (find-file-noselect file))
+         ;; Set buf to a widened indirect clone buffer if INDIRECT-BUFFER-P is
+         ;; non-nil or if accepted by user prompt, which is only shown if
+         ;; INDIRECT-BUFFER-P is not 'accept
+         (_ (with-current-buffer buf
+              (when (or (and indirect-buffer-p (not (eq 'accept indirect-buffer-p)))
+                        (and (not (<= (point-min) location (point-max)))
+                             (or (eq 'accept indirect-buffer-p)
+                                 (y-or-n-p "Node point is outside the visible part of the buffer.  Open in new indirect buffer?"))))
+                (with-current-buffer (clone-indirect-buffer nil nil)
+                  (widen)
+                  (setq buf (current-buffer))))))
+         (display-actions (or display-actions '(display-buffer-same-window)))
+         (window (display-buffer buf display-actions)))
+    ;; Only select the window and push to the org mark ring when NO-SELECT is
+    ;; nil
+    (unless no-select
+      (org-mark-ring-push)
+      (select-window window))
     (with-current-buffer buf
-      (when (or (and indirect-buffer-p (not (eq 'accept indirect-buffer-p)))
-                (and (not (<= (point-min) location (point-max)))
-                     (or (eq 'accept indirect-buffer-p)
-                         (y-or-n-p "Node point is outside the visible part of the buffer.  Open in new indirect buffer?"))))
-        (with-current-buffer (clone-indirect-buffer nil nil)
-          (widen)
-          (setq buf (current-buffer)))))
-    (let* ((window (display-buffer buf (or display-actions '(display-buffer-same-window)))))
-      ;; Select the window unless NO-SELECT is true
-      (unless no-select
-        (org-mark-ring-push)
-        (select-window window))
-      (with-current-buffer buf
-        (if (<= (point-min) location (point-max))
-            (progn
-              (goto-char location)
-              ;; We must call `set-window-point' to move point in the buffer to
-              ;; cover the case when NO-SELECT is non-nil
-              (set-window-point window location)
-              (when (org-fold-folded-p)
-                (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
-                (org-fold-show-context 'ancestors)))
-          (message "Node is not in visible part of buffer. Not moving point"))))))
+      (if (<= (point-min) location (point-max))
+          (progn
+            (goto-char location)
+            ;; We must call `set-window-point' to move point in the buffer to
+            ;; cover the case when NO-SELECT is non-nil
+            (set-window-point window location)
+            (when (org-fold-folded-p)
+              (message "Node in folded region of buffer. Revealing node heading and its heading ancestors")
+              (org-fold-show-context 'ancestors)))
+        (message "Node is not in visible part of buffer. Not moving point")))))
 
 (defun org-roam-folgezettel-open-node-other-window (node)
   "Show NODE in a new window, selected the buffer.
