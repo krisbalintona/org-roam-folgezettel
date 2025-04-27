@@ -666,6 +666,31 @@ When called interactively, NODE is the node at point."
     (dolist (node (vtable-objects table))
       (vtable-toggle-marked-object table node))))
 
+(defun org-roam-folgezettel-marked-eval (form &optional accept-indirect-buffer)
+  "Evaluate FORM on each node marked in the vtable.
+For each marked node, FORM will be evaluated with point at the beginning
+of the node.  Internally, the file corresponding to a node will be
+opened with `org-roam-folgezettel-open-node', which may create indirect
+buffers.  Read its docstring for more information.
+
+When called interactively, FORM will be prompted for.
+
+When ACCEPT-INDIRECT-BUFFER is non-nil, pass \\='accept to the
+INDIRECT-BUFFER-P parameter of `org-roam-folgezettel-open-node'.  When
+called interactively, this is the universal argument."
+  (interactive (list (read--expression "Eval in marked nodes: ") current-prefix-arg))
+  (if-let ((nodes (vtable-marked-objects (vtable-current-table))))
+      (let (result)
+        ;; Save window state to restore it after all FORMs are evaluated, just
+        ;; in case FORM alters the window state
+        (save-window-excursion
+          (dolist (node nodes result)
+            (save-mark-and-excursion
+              (org-roam-folgezettel-open-node node nil t accept-indirect-buffer)
+              ;; 2025-04-26: Not sure if dynamic or lexical bind is more appropriate
+              (setq result (eval form t))))))
+    (message "No marked nodes!")))
+
 ;;;; Filtering
 (defun org-roam-folgezettel-filter-undo ()
   "Apply previous filter query.
@@ -1145,6 +1170,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "U" #'org-roam-folgezettel-unmark-all
   "t" #'org-roam-folgezettel-toggle-mark
   "T" #'org-roam-folgezettel-toggle-mark-all
+  "e" #'org-roam-folgezettel-marked-eval
   "M-u" #'org-roam-folgezettel-upward
   "M-d" #'org-roam-folgezettel-downward
   "M-n" #'org-roam-folgezettel-forward-sibling
