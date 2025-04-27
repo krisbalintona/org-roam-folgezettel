@@ -1120,40 +1120,20 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "q" #'quit-window
   "x" #'kill-current-buffer)
 
-(defvar org-roam-folgezettel-action-map
-  '("m" vtable-mark-object
-    "u" vtable-unmark-object
-    "t" vtable-toggle-marked-object)
-  "A list of actions org-roam-folgezettel vtables.
-This is a list whose syntax is the same as ‘define-keymap’.  Functions
-in this list are called on the vtable object at point as the first and
-only argument.
-
-Evaluate \(info \"(vtable) Making A Table\"\) for information on vtable
-action maps.")
-
 (defvar-keymap org-roam-folgezettel-table-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
-  "p" #'previous-line
-  "n" #'next-line
+  "p" #'vtable-prev-line
+  "n" #'vtable-next-line
   "g" #'vtable-revert-command
-  "RET" #'org-roam-folgezettel-open-node
-  "o" #'org-roam-folgezettel-open-node-other-window
-  "C-o" #'org-roam-folgezettel-display-node
-  "i" #'org-roam-folgezettel-edit-index
-  "M" #'vtable-mark-all-objects
-  "U" #'vtable-unmark-all-objects
   "T" #'org-roam-folgezettel-toggle-mark-all
   "e" #'org-roam-folgezettel-marked-eval
+  "s" #'org-roam-folgezettel-goto-node
   "M-u" #'org-roam-folgezettel-upward
   "M-d" #'org-roam-folgezettel-downward
   "M-n" #'org-roam-folgezettel-forward-sibling
   "M-p" #'org-roam-folgezettel-backward-sibling
   "M-<up>" #'org-roam-folgezettel-move-up
   "M-<down>" #'org-roam-folgezettel-move-down
-  "w" #'org-roam-folgezettel-store-link
-  "s" #'org-roam-folgezettel-goto-node
-  "C-k" #'org-roam-folgezettel-kill-line
   "C-/" #'org-roam-folgezettel-filter-undo
   "C-?" #'org-roam-folgezettel-filter-redo
   "/ ?" #'org-roam-folgezettel-filter-menu
@@ -1165,6 +1145,32 @@ action maps.")
   "/ b" #'org-roam-folgezettel-filter-buffer
   "/ i c" #'org-roam-folgezettel-filter-children
   "/ i d" #'org-roam-folgezettel-filter-descendants)
+
+(defcustom org-roam-folgezettel-action-map
+  '("RET" org-roam-folgezettel-open-node
+    "C-o" org-roam-folgezettel-display-node
+    "o" org-roam-folgezettel-open-node-other-window
+    "i" org-roam-folgezettel-edit-index
+    "w" org-roam-folgezettel-store-link
+    "C-k" org-roam-folgezettel-kill-line
+    "m" vtable-mark-object
+    "M" vtable-mark-all-objects
+    "u" vtable-unmark-object
+    "U" vtable-unmark-all-objects
+    "t" vtable-toggle-marked-object)
+  "A list of actions org-roam-folgezettel vtables.
+This is a list whose syntax is the same as ‘define-keymap’.  Functions
+in this list are called on the vtable object at point as the first and
+only argument.
+
+Users should add to this list functions that act on a given node by
+taking that node as its only argument.
+
+Evaluate the following for more information on vtable action maps:
+
+    \(info \"(vtable) Making A Table\"\)"
+  :type '(repeat (choice (string :tag "Keybind")
+                         (function :tag "Function"))))
 
 (define-derived-mode org-roam-folgezettel-mode fundamental-mode "ORF"
   "Major mode for listing org-roam nodes."
