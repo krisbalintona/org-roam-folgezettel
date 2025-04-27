@@ -33,6 +33,7 @@
 (require 'transient)
 
 ;;; Variables
+
 ;;;; Options
 (defgroup org-roam-folgezettel ()
   "Interfaces for org-roam nodes."
@@ -96,6 +97,7 @@ Inspired by tablist.el's filter indicator.  Is added to
 Is zero-indexed.")
 
 ;;; Functions
+
 ;;;; Index numbering sorter
 (defun org-roam-folgezettel--index-normalize (index)
   "Normalized INDEX into a signature whose parts are separated by \".\".
@@ -208,6 +210,7 @@ function returns \"*foo [bar]*\"."
     (format "*%s [%s]*" trimmed-default query)))
 
 ;;;; Making the vtable
+
 ;;;;; Retrieving values
 (defun org-roam-folgezettel-list--retrieve-index (node)
   "Retrieve the index number of NODE.
@@ -283,6 +286,7 @@ Meant to be used as the formatter for tags."
   (propertize tags 'face 'org-tag))
 
 ;;;;; Org-roam-ql integration
+
 ;;;;;; Helper functions
 (defun org-roam-folgezettel--index-prefix-p (index1 index2)
   "Check if the parts of INDEX1 are the prefix of the parts of INDEX2.
@@ -580,51 +584,6 @@ If called interactively, NODE is the node corresponding to the vtable
 object at point."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (org-roam-folgezettel-open-node node '(display-buffer-pop-up-window) :no-select))
-
-;;;; Editing
-(defun org-roam-folgezettel-edit-index (node)
-  "Edit the index of NODE.
-Prompts for a new index for NODE.  If called interactively, NODE is the
-node at point."
-  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
-  (let* ((save-silently t)
-         ;; Just in case NODE is outdated (e.g., this function is called
-         ;; interactively on a vtable listing whose corresponding node has since
-         ;; been changed), we get the updated node from NODE's ID
-         (node (org-roam-node-from-id (org-roam-node-id node)))
-         (file (org-roam-node-file node))
-         (current-index (org-roam-folgezettel-list--retrieve-index node))
-         (node-point (org-roam-node-point node))
-         (node-box (org-roam-folgezettel-list--retrieve-box node))
-         (all-box-nodes (org-roam-ql-nodes `(box ,node-box)))
-         (all-index-numbers
-          (cl-loop for node in (org-roam-node-list)
-                   when (and (member node all-box-nodes)
-                             (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
-                                      (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
-                   collect (org-roam-folgezettel-list--retrieve-index node)))
-         (prompt (format "New index numbering for %s: " (org-roam-node-formatted node)))
-         (retry-p t)
-         new-index)
-    (while retry-p
-      (setq new-index (read-string prompt current-index))
-      (if (member new-index all-index-numbers)
-          (progn
-            (setq retry-p t
-                  prompt (format "Index number %s taken! Please choose another index numbering: " new-index)))
-        (setq retry-p nil)))
-    (unless (string= current-index new-index)
-      (with-current-buffer (find-file-noselect file)
-        (save-restriction
-          (save-excursion
-            (widen)
-            (goto-char node-point)
-            (org-roam-node-at-point 'assert)
-            (add-to-history 'org-roam-folgezettel-edit-index-history new-index)
-            (org-set-property "ROAM_PLACE" new-index))
-          (save-buffer)
-          (org-roam-db-update-file file)
-          (message "Set index of %s to %s" (org-roam-node-title node) new-index))))))
 
 ;;;; Marking
 
@@ -940,6 +899,51 @@ Other filtering commands are available in
              (cond ((stringp buffer) buffer)
                    ((bufferp buffer) (buffer-name buffer))
                    (t (error "BUFFER should be a buffer name or buffer object"))))))
+
+;;;; Editing
+(defun org-roam-folgezettel-edit-index (node)
+  "Edit the index of NODE.
+Prompts for a new index for NODE.  If called interactively, NODE is the
+node at point."
+  (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
+  (let* ((save-silently t)
+         ;; Just in case NODE is outdated (e.g., this function is called
+         ;; interactively on a vtable listing whose corresponding node has since
+         ;; been changed), we get the updated node from NODE's ID
+         (node (org-roam-node-from-id (org-roam-node-id node)))
+         (file (org-roam-node-file node))
+         (current-index (org-roam-folgezettel-list--retrieve-index node))
+         (node-point (org-roam-node-point node))
+         (node-box (org-roam-folgezettel-list--retrieve-box node))
+         (all-box-nodes (org-roam-ql-nodes `(box ,node-box)))
+         (all-index-numbers
+          (cl-loop for node in (org-roam-node-list)
+                   when (and (member node all-box-nodes)
+                             (not (or (equal nil (org-roam-folgezettel-list--retrieve-index node))
+                                      (string-empty-p (org-roam-folgezettel-list--retrieve-index node)))))
+                   collect (org-roam-folgezettel-list--retrieve-index node)))
+         (prompt (format "New index numbering for %s: " (org-roam-node-formatted node)))
+         (retry-p t)
+         new-index)
+    (while retry-p
+      (setq new-index (read-string prompt current-index))
+      (if (member new-index all-index-numbers)
+          (progn
+            (setq retry-p t
+                  prompt (format "Index number %s taken! Please choose another index numbering: " new-index)))
+        (setq retry-p nil)))
+    (unless (string= current-index new-index)
+      (with-current-buffer (find-file-noselect file)
+        (save-restriction
+          (save-excursion
+            (widen)
+            (goto-char node-point)
+            (org-roam-node-at-point 'assert)
+            (add-to-history 'org-roam-folgezettel-edit-index-history new-index)
+            (org-set-property "ROAM_PLACE" new-index))
+          (save-buffer)
+          (org-roam-db-update-file file)
+          (message "Set index of %s to %s" (org-roam-node-title node) new-index))))))
 
 ;;;; Movement via index numbers
 (defun org-roam-folgezettel-upward (&optional dist)
