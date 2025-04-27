@@ -516,6 +516,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                         :max-width "30%"
                         :truncate-guess-tolerance 0))
            :keymap org-roam-folgezettel-table-map
+           :actions org-roam-folgezettel-action-map
            :objects-function #'org-roam-folgezettel-list--objects
            :getter #'org-roam-folgezettel-list--getter
            :separator-width 2
@@ -625,44 +626,11 @@ If called interactively, NODE is the org-roam node at point."
         (message "Could not find %s" node-formatted)))))
 
 ;;;; Marking
-
-(defun org-roam-folgezettel-mark (node)
-  "Mark NODE in the current vtable.
-When called interactively, NODE is the node at point."
-  (interactive (list (vtable-current-object)))
-  (vtable-mark-object (vtable-current-table) node)
-  (next-line 1))
-
-(defun org-roam-folgezettel-mark-all ()
-  "Mark all nodes in the current vtable."
-  (interactive)
-  (vtable-mark-all-objects (vtable-current-table)))
-
-(defun org-roam-folgezettel-unmark (node)
-  "Unmark NODE in the current vtable.
-When called interactively, NODE is the node at point."
-  (interactive (list (vtable-current-object)))
-  (vtable-unmark-object (vtable-current-table) node)
-  (next-line 1))
-
-(defun org-roam-folgezettel-unmark-all ()
-  "Unmark nodes in the current vtable."
-  (interactive)
-  (vtable-unmark-all-objects (vtable-current-table)))
-
-(defun org-roam-folgezettel-toggle-mark (node)
-  "Toggle the marked state of NODE in the current vtable.
-When called interactively, NODE is the node at point."
-  (interactive (list (vtable-current-object)))
-  (vtable-toggle-marked-object (vtable-current-table) node)
-  (next-line 1))
-
 (defun org-roam-folgezettel-toggle-mark-all ()
   "Toggle the marked state of all nodes in the current vtable."
   (interactive)
-  (let ((table (vtable-current-table)))
-    (dolist (node (vtable-objects table))
-      (vtable-toggle-marked-object table node))))
+  (dolist (node (vtable-objects (vtable-current-table)))
+    (vtable-toggle-marked-object node)))
 
 (defun org-roam-folgezettel-marked-eval (form &optional accept-indirect-buffer)
   "Evaluate FORM on each node marked in the vtable.
@@ -1142,7 +1110,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   (let ((inhibit-read-only t))
     (vtable-remove-object (vtable-current-table) node)))
 
-;;; Major mode, keymap, and transient menus
+;;; Major mode, keymaps, and transient menus
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "p" #'previous-line
@@ -1151,6 +1119,18 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "DEL" #'scroll-down-command
   "q" #'quit-window
   "x" #'kill-current-buffer)
+
+(defvar org-roam-folgezettel-action-map
+  '("m" vtable-mark-object
+    "u" vtable-unmark-object
+    "t" vtable-toggle-marked-object)
+  "A list of actions org-roam-folgezettel vtables.
+This is a list whose syntax is the same as ‘define-keymap’.  Functions
+in this list are called on the vtable object at point as the first and
+only argument.
+
+Evaluate \(info \"(vtable) Making A Table\"\) for information on vtable
+action maps.")
 
 (defvar-keymap org-roam-folgezettel-table-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
@@ -1161,11 +1141,8 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
   "i" #'org-roam-folgezettel-edit-index
-  "m" #'org-roam-folgezettel-mark
-  "M" #'org-roam-folgezettel-mark-all
-  "u" #'org-roam-folgezettel-unmark
-  "U" #'org-roam-folgezettel-unmark-all
-  "t" #'org-roam-folgezettel-toggle-mark
+  "M" #'vtable-mark-all-objects
+  "U" #'vtable-unmark-all-objects
   "T" #'org-roam-folgezettel-toggle-mark-all
   "e" #'org-roam-folgezettel-marked-eval
   "M-u" #'org-roam-folgezettel-upward
