@@ -530,14 +530,14 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     buf))
 
 ;;;; Showing nodes
-(defun org-roam-folgezettel-open-node (node &optional display-actions no-select indirect-buffer-p)
+(defun org-roam-folgezettel-open-node (node &optional display-buffer-action no-select indirect-buffer-p)
   "Open the NODE in its file and move point to its location.
 If NODE is in a folded or invisible region, reveal its heading.  If NODE
 is outside the visible part of the buffer, optionally open it in an
 indirect buffer.
 
-DISPLAY-ACTIONS is a list that the ACTION parameter of `display-buffer'
-accepts.
+DISPLAY-BUFFER-ACTION is a list that the ACTION parameter of
+`display-buffer' accepts.
 
 When NO-SELECT is nil, open the buffer in a window and push the current
 point this function was called from to `org-mark-ring'.  When NO-SELECT
@@ -565,8 +565,8 @@ created anyway."
                 (with-current-buffer (clone-indirect-buffer nil nil)
                   (widen)
                   (setq buf (current-buffer))))))
-         (display-actions (or display-actions '(display-buffer-same-window)))
-         (window (display-buffer buf display-actions)))
+         (display-buffer-action (or display-buffer-action '(display-buffer-same-window)))
+         (window (display-buffer buf display-buffer-action)))
     ;; Only select the window and push to the org mark ring when NO-SELECT is
     ;; nil
     (unless no-select
