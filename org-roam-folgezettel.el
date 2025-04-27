@@ -192,7 +192,7 @@ NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
                         (nthcdr org-roam-folgezettel-filter-query-history-place
                                 org-roam-folgezettel-filter-query-history))
                 org-roam-folgezettel-filter-query-history-place 0)
-    (org-roam-folgezettel-refresh)))
+    (vtable-revert-command)))
 
 ;;;; Buffer names
 (defun org-roam-folgezettel--buffer-name-concat (query)
@@ -664,7 +664,7 @@ Queries are preserved in `org-roam-folgezettel-filter-query-history'."
                   (nth previous-place org-roam-folgezettel-filter-query-history)
                   org-roam-folgezettel-filter-query-history-place previous-place)
       (message "Going back in filter history")
-      (org-roam-folgezettel-refresh))))
+      (vtable-revert-command))))
 
 (defun org-roam-folgezettel-filter-redo ()
   "Apply next filter query.
@@ -678,7 +678,7 @@ Queries are preserved in `org-roam-folgezettel-filter-query-history'."
                   (nth next-place org-roam-folgezettel-filter-query-history)
                   org-roam-folgezettel-filter-query-history-place next-place)
       (message "Going forward in filter history")
-      (org-roam-folgezettel-refresh))))
+      (vtable-revert-command))))
 
 (defun org-roam-folgezettel-filter-query-edit (new-query new-buffer-p)
   "Manually modify the filter for the current `org-roam-folgezettel' buffer.
@@ -1079,26 +1079,6 @@ columns in the `org-roam-folgezettel-mode' table."
     (vtable-goto-object object)))
 
 ;;;; Other
-(defun org-roam-folgezettel-refresh ()
-  "Refresh the current `org-roam-folgezettel-mode' buffer."
-  (interactive)
-  ;; We rely on the node's ID in case any data of the node was changed, e.g.,
-  ;; its tags
-  (let ((id (org-roam-node-id (vtable-current-object)))
-        (col (current-column)))
-    (widen)
-    (text-property-search-backward 'vtable)
-    (vtable-revert-command)
-    ;; We must manually go to the original object because this command first
-    ;; ensures we are on the vtable (e.g. not at the end of the buffer) by
-    ;; moving point, then calling `vtable-revert-command', which reverts the
-    ;; table but "restores" the point to the location we moved the point to.
-    ;; This is still the case even with `save-excursion'.
-    (vtable-goto-object
-     (cl-find-if (lambda (object) (equal id (org-roam-node-id object)))
-                 (vtable-objects (vtable-current-table))))
-    (move-to-column col)))
-
 (defun org-roam-folgezettel-store-link (node)
   "Call `org-store-link' on NODE.
 If called interactively, NODE is the node at point.
@@ -1163,7 +1143,7 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
   "p" #'previous-line
   "n" #'next-line
-  "g" #'org-roam-folgezettel-refresh
+  "g" #'vtable-revert-command
   "RET" #'org-roam-folgezettel-open-node
   "o" #'org-roam-folgezettel-open-node-other-window
   "C-o" #'org-roam-folgezettel-display-node
