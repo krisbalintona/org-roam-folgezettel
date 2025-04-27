@@ -3,6 +3,8 @@
 
 #  LocalWords:  Roadmap ql folgezettel Composability folgezettel's
 
+*DEVELOPMENT NOTE:* This project is unreleased. Although users are free to view and use its code, until official release, the project may undergo significant changes. Additionally, the author's current use of the project depends on bespoke configuration outside of the project. Only until the author's vision for the ideal usage of the project has stablized will these features be merged into this project. At that point, this project will likely be officially packaged and released.
+
 This package is a progression of [[https://github.com/krisbalintona/denote-zettel-interface][krisbalintona/denote-zettel-interface]], which the author initially relied on while using denote instead of org-roam.
 
 The vision of this package is my way of mitigating the difference between interfacing with a digital Zettelkasten and filing through a physical Zettelkasten. The approach of org-roam-folgezettel is to represent the folgezettel index in a list format (with =vtable.el=) and be able to navigate the index according to the numbering of notes and filter the shown notes arbitrarily (including by parents and siblings of a folgezettel index numbering).
