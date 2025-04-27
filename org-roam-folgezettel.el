@@ -541,19 +541,29 @@ If NODE is in a folded or invisible region, reveal its heading.  If NODE
 is outside the visible part of the buffer, optionally open it in an
 indirect buffer.
 
-DISPLAY-ACTIONS is a list of `display-buffer' actions.  NO-SELECT
-prevents selecting the buffer window.  INDIRECT-BUFFER-P forces opening
-NODE in an indirect buffer."
+DISPLAY-ACTIONS is a list that the ACTION parameter of `display-buffer'
+accepts.
+
+NO-SELECT prevents selecting the window of the node's buffer.
+
+When INDIRECT-BUFFER-P IS t forces opening NODE in an indirect buffer,
+whereas normally an indirect buffer is created only when the node is in
+an inaccessible portion of a narrowed buffer and the user accepts the
+prompt to create a new indirect buffer.  If INDIRECT-BUFFER-P is set to
+\\='accept, then this prompt is not shown and the indirect buffer is
+created anyway."
   (interactive (list (vtable-current-object)) org-roam-folgezettel-mode)
   (let* ((file (org-roam-node-file node))
          (location (org-roam-node-point node))
          (buf (find-file-noselect file)))
     ;; Set buf to a widened indirect clone buffer if INDIRECT-BUFFER-P is
-    ;; non-nil or if requested by user
+    ;; non-nil or if accepted by user prompt, which is only shown if
+    ;; INDIRECT-BUFFER-P is not 'accept
     (with-current-buffer buf
-      (when (or indirect-buffer-p
+      (when (or (and indirect-buffer-p (not (eq 'accept indirect-buffer-p)))
                 (and (not (<= (point-min) location (point-max)))
-                     (y-or-n-p "Node point is outside the visible part of the buffer.  Open in new indirect buffer?")))
+                     (or (eq 'accept indirect-buffer-p)
+                         (y-or-n-p "Node point is outside the visible part of the buffer.  Open in new indirect buffer?"))))
         (with-current-buffer (clone-indirect-buffer nil nil)
           (widen)
           (setq buf (current-buffer)))))
