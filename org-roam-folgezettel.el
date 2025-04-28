@@ -40,14 +40,10 @@
   :group 'files
   :prefix "org-roam-folgezettel-")
 
-(defcustom org-roam-folgezettel-filter-query nil
+(defcustom org-roam-folgezettel-default-filter-query nil
   "A symbol representing a filter for the buffer.
 This symbol is of the form of SOURCE-OR-QUERY that org-roam-ql commands
-like `org-roam-ql-search'accepts.
-
-This is a buffer-local variable.  Users can set the default value of
-this variable to create a \"default\" filter; that is, a filter for
-every fresh `org-roam-folgezettel-mode' buffer."
+like `org-roam-ql-search'accepts."
   :local t
   :safe t
   :type '(restricted-sexp :match-alternatives (listp)))
@@ -96,7 +92,7 @@ Inspired by tablist.el's filter indicator.  Is added to
   "Current place in `org-roam-folgezettel-filter-query-history'.
 Is zero-indexed.")
 
-;;; Functions
+;;; Functions and macros
 
 ;;;; Index numbering sorter
 (defun org-roam-folgezettel--index-normalize (index)
@@ -176,6 +172,33 @@ Handles mixed numeric and alphabetic components in index parts."
       ;; If we loop through all parts without difference, they are equal
       nil)))
 
+;;;; Vtable local data
+(defmacro org-roam-folgezettel--table-get-data (var &optional table)
+  "Get the value of VAR in TABLE.
+Additional data may be set in the vtable using its :extra-data slot.
+Use this macro to access that data.  You can use this function in
+\"place expressions,\" like you can with `alist-get'.
+
+VAR should be an unquoted symbol.
+
+If TABLE is nil, use the vtable at point."
+  `(alist-get ',var (vtable-extra-data (or ,table (vtable-current-table)))))
+
+(defmacro org-roam-folgezettel--table-set-data (table &rest args)
+  "Set the value of VAR in TABLE.
+Additional data may be set in the vtable using its :extra-data slot.
+Use this macro to set variables that data.
+
+VAR should be an unquoted symbol.
+
+If TABLE is nil, use the vtable at point.
+
+ARGS should be (VAR VAL VAR VAL ...) like in `setf'."
+  (declare (indent 1))
+  `(let ((extra-data (vtable-extra-data (or ,table (vtable-current-table)))))
+     ,@(cl-loop for (var val) on args by #'cddr
+                collect `(setf (alist-get ',var extra-data) ,val))))
+
 ;;;; Filter queries
 (defun org-roam-folgezettel-filter--modify (query new-buffer)
   "Modify the filter for the current buffer and update listing.
@@ -186,12 +209,13 @@ If NEW-BUFFER is non-nil, pass that argument to
 NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
   (if new-buffer
       (org-roam-folgezettel-list new-buffer query)
-    (setq-local org-roam-folgezettel-filter-query query
-                org-roam-folgezettel-filter-query-history
-                (append (list query)
-                        (nthcdr org-roam-folgezettel-filter-query-history-place
-                                org-roam-folgezettel-filter-query-history))
-                org-roam-folgezettel-filter-query-history-place 0)
+    (org-roam-folgezettel--table-set-data (vtable-current-table)
+      org-roam-folgezettel-filter-query query
+      org-roam-folgezettel-filter-query-history
+      (append (list query)
+              (nthcdr (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history-place)
+                      (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history)))
+      org-roam-folgezettel-filter-query-history-place 0)
     (vtable-revert-command)))
 
 ;;;; Buffer names
@@ -410,9 +434,11 @@ The reason we define this predicate is because org-roam-ql's
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
 contains the cached information for that node."
-  (let ((org-roam-folgezettel-filter-query
-         (or org-roam-folgezettel-filter-query (org-roam-node-list))))
-    (or (org-roam-ql-nodes org-roam-folgezettel-filter-query)
+  (let ((filter-query
+         (or (when (vtable-current-table) (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+             org-roam-folgezettel-default-filter-query
+             (org-roam-node-list))))
+    (or (org-roam-ql-nodes filter-query)
         (prog1
             (org-roam-node-list)
           (message "Query yields no results! Showing all nodes instead.")))))
@@ -475,59 +501,55 @@ See the bindings in `org-roam-folgezettel-table-map' below:
          ((and buf-name (not (stringp buf-name)))
           (generate-new-buffer-name org-roam-folgezettel-default-buffer-name))
          ((not buf-name) org-roam-folgezettel-default-buffer-name)))
-  (let ((buf (get-buffer-create buf-name)))
+  (let ((buf (get-buffer-create buf-name))
+        (filter-query (or filter-query org-roam-folgezettel-default-filter-query)))
     ;; NOTE: Due to a limitation in vtable (see bug#69837), the width of object
     ;; representations can only be properly calculated when the buffer the
     ;; vtable is created on is currently visible.  Therefore, we must switch to
     ;; a buffer then create the vtable.
     (with-selected-window (select-window (display-buffer buf display-buffer-action))
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+            table)
         ;; Only insert vtable and set buffer-local values if the buffer doesn't
         ;; already have one
         (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
           (org-roam-folgezettel-mode)
           (setq-local buffer-read-only t
-                      truncate-lines t
-                      org-roam-folgezettel-filter-query
-                      (or filter-query org-roam-folgezettel-filter-query)
-                      org-roam-folgezettel-filter-query-history
-                      (list (or filter-query org-roam-folgezettel-filter-query))
-                      org-roam-folgezettel-filter-query-history-place 0
-                      org-roam-folgezettel-filter-indicator
-                      (lambda () (prin1-to-string org-roam-folgezettel-filter-query)))
-          ;; Create vtable after setting buffer-local value for
-          ;; `org-roam-folgezettel-filter-query'
-          (make-vtable
-           :columns '(( :name "Index"
-                        :primary ascend
-                        :align left
-                        :formatter org-roam-folgezettel--index-formatter
-                        :comparator org-roam-folgezettel--index-lessp
-                        :max-width "10%"
-                        :truncate-guess-tolerance 0)
-                      ( :name "Path"
-                        :align left
-                        :max-width "75%"
-                        :formatter org-roam-folgezettel--path-formatter
-                        :truncate-guess-tolerance 0)
-                      ( :name "Tags"
-                        :align right
-                        :formatter org-roam-folgezettel--tags-formatter
-                        :max-width "30%"
-                        :truncate-guess-tolerance 0))
-           :keymap org-roam-folgezettel-table-map
-           :actions org-roam-folgezettel-action-map
-           :objects-function #'org-roam-folgezettel-list--objects
-           :getter #'org-roam-folgezettel-list--getter
-           :separator-width 2
-           :use-header-line t
-           ;; Every refresh of the vtable, meaning "identical" nodes are the
-           ;; same (`eq').  We would use `equal', but sometimes we change the
-           ;; data of a node (e.g. its tags), making that a new node.
-           ;; Oftentimes, we don't want such nodes to be considered unequal, so
-           ;; instead we use the node ID.
-           :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))))))
-    (select-window (display-buffer buf '(display-buffer-same-window)))
+                      truncate-lines t)
+          (setq table (make-vtable
+                       :columns '(( :name "Index"
+                                    :primary ascend
+                                    :align left
+                                    :formatter org-roam-folgezettel--index-formatter
+                                    :comparator org-roam-folgezettel--index-lessp
+                                    :max-width "10%"
+                                    :truncate-guess-tolerance 0)
+                                  ( :name "Path"
+                                    :align left
+                                    :max-width "75%"
+                                    :formatter org-roam-folgezettel--path-formatter
+                                    :truncate-guess-tolerance 0)
+                                  ( :name "Tags"
+                                    :align right
+                                    :formatter org-roam-folgezettel--tags-formatter
+                                    :max-width "30%"
+                                    :truncate-guess-tolerance 0))
+                       :keymap org-roam-folgezettel-table-map
+                       :actions org-roam-folgezettel-action-map
+                       :objects-function #'org-roam-folgezettel-list--objects
+                       :getter #'org-roam-folgezettel-list--getter
+                       :separator-width 2
+                       :use-header-line t
+                       :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))))
+          ;; Set local variables for vtable
+          (vtable-set-extra-data (vtable-current-table)
+                                 (list (cons 'org-roam-folgezettel-filter-query filter-query)
+                                       (cons 'org-roam-folgezettel-filter-query-history (list filter-query))
+                                       (cons 'org-roam-folgezettel-filter-query-history-place 0)
+                                       (cons 'org-roam-folgezettel-filter-indicator
+                                             `(lambda ()
+                                                (prin1-to-string
+                                                 (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query ,table)))))))))
     buf))
 
 ;;;; Showing nodes
@@ -665,13 +687,14 @@ called interactively, this is the universal argument."
 Queries are preserved in `org-roam-folgezettel-filter-query-history'."
   (interactive)
   (let ((previous-place
-         (1+ org-roam-folgezettel-filter-query-history-place)))
-    (if (< (1- (length org-roam-folgezettel-filter-query-history))
+         (1+ (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history-place)))
+        (history (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history)))
+    (if (< (1- (length history))
            previous-place)
         (message "No previous query in filter history")
-      (setq-local org-roam-folgezettel-filter-query
-                  (nth previous-place org-roam-folgezettel-filter-query-history)
-                  org-roam-folgezettel-filter-query-history-place previous-place)
+      (org-roam-folgezettel--table-set-data (vtable-current-table)
+        org-roam-folgezettel-filter-query (nth previous-place history)
+        org-roam-folgezettel-filter-query-history-place previous-place)
       (message "Going back in filter history")
       (vtable-revert-command))))
 
@@ -680,12 +703,13 @@ Queries are preserved in `org-roam-folgezettel-filter-query-history'."
 Queries are preserved in `org-roam-folgezettel-filter-query-history'."
   (interactive)
   (let ((next-place
-         (1- org-roam-folgezettel-filter-query-history-place)))
+         (1- (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history-place)))
+        (history (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query-history)))
     (if (> 0 next-place)
         (message "No next query in filter history")
-      (setq-local org-roam-folgezettel-filter-query
-                  (nth next-place org-roam-folgezettel-filter-query-history)
-                  org-roam-folgezettel-filter-query-history-place next-place)
+      (org-roam-folgezettel--table-set-data (vtable-current-table)
+        org-roam-folgezettel-filter-query (nth next-place history)
+        org-roam-folgezettel-filter-query-history-place next-place)
       (message "Going forward in filter history")
       (vtable-revert-command))))
 
@@ -701,7 +725,7 @@ Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "New filter query: "
-                                  (and org-roam-folgezettel-filter-query (prin1-to-string org-roam-folgezettel-filter-query))
+                                  (funcall (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-indicator))
                                   'org-roam-folgezettel-filter-query-edit-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -730,11 +754,12 @@ Other filtering commands are available in
                                       nil t nil 'org-roam-folgezettel-filter-directory-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((subdir (string-trim subdir "/" "/"))
-        (new-query (if org-roam-folgezettel-filter-query
-                       `(and ,org-roam-folgezettel-filter-query
-                             (subdir ,subdir))
-                     `(subdir ,subdir))))
+  (let* ((subdir (string-trim subdir "/" "/"))
+         (filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
+                              (subdir ,subdir))
+                      `(subdir ,subdir))))
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
@@ -758,10 +783,11 @@ Other filtering commands are available in
                                   nil 'org-roam-folgezettel-filter-person-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((new-query (if org-roam-folgezettel-filter-query
-                       `(and ,org-roam-folgezettel-filter-query
-                             (person ,person))
-                     `(person ,person))))
+  (let* ((filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
+                              (person ,person))
+                      `(person ,person))))
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
@@ -783,10 +809,11 @@ Other filtering commands are available in
                                   nil 'org-roam-folgezettel-filter-title-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((new-query (if org-roam-folgezettel-filter-query
-                       `(and ,org-roam-folgezettel-filter-query
-                             (title ,regexp))
-                     `(title ,regexp))))
+  (let* ((filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
+                              (title ,regexp))
+                      `(title ,regexp))))
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
@@ -809,10 +836,11 @@ Other filtering commands are available in
                                                  nil nil nil 'org-roam-folgezettel-filter-tags-history))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let ((new-query (if org-roam-folgezettel-filter-query
-                       `(and ,org-roam-folgezettel-filter-query
-                             ,(flatten-list `(tags ,tags)))
-                     (flatten-list `(tags ,tags)))))
+  (let* ((filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
+                              ,(flatten-list `(tags ,tags)))
+                      (flatten-list `(tags ,tags)))))
     (org-roam-folgezettel-filter--modify
      new-query
      (when new-buffer-p
@@ -836,8 +864,9 @@ Other filtering commands are available in
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
          (id (org-roam-node-id node))
-         (new-query (if org-roam-folgezettel-filter-query
-                        `(and ,org-roam-folgezettel-filter-query
+         (filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
                               (or (id ,id)
                                   (children ,index)))
                       `(or (id ,id)
@@ -865,8 +894,9 @@ Other filtering commands are available in
                org-roam-folgezettel-mode)
   (let* ((index (org-roam-folgezettel-list--retrieve-index node))
          (id (org-roam-node-id node))
-         (new-query (if org-roam-folgezettel-filter-query
-                        `(and ,org-roam-folgezettel-filter-query
+         (filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
                               (or (id ,id)
                                   (descendants ,index)))
                       `(or (id ,id)
@@ -896,8 +926,9 @@ Other filtering commands are available in
                                       (eq 'org-mode (buffer-local-value 'major-mode buf)))))
                      current-prefix-arg)
                org-roam-folgezettel-mode)
-  (let* ((new-query (if org-roam-folgezettel-filter-query
-                        `(and ,org-roam-folgezettel-filter-query
+  (let* ((filter-query (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-query))
+         (new-query (if filter-query
+                        `(and ,filter-query
                               (in-org-buffer ,buffer))
                       `(in-org-buffer ,buffer))))
     (org-roam-folgezettel-filter--modify
@@ -1178,12 +1209,15 @@ Evaluate the following for more information on vtable action maps:
   "Major mode for listing org-roam nodes."
   :interactive nil
   :group 'org-roam-folgezettel
-  :after-hook (set (make-local-variable 'mode-line-misc-info)
-                   (append
-                    (list
-                     (list 'org-roam-folgezettel-filter-query
-                           '(:eval (format " [Query:%s]"
-                                           (string-remove-suffix "," (string-trim (funcall org-roam-folgezettel-filter-indicator))))))))))
+  :after-hook
+  (set (make-local-variable 'mode-line-misc-info)
+       (append
+        (list
+         '(:eval
+           (save-excursion
+             (goto-char (point-min))
+             (when-let ((indicator-func (org-roam-folgezettel--table-get-data org-roam-folgezettel-filter-indicator)))
+               (format " [Query:%s]" (string-remove-suffix "," (string-trim (funcall indicator-func)))))))))))
 
 (transient-define-prefix org-roam-folgezettel-filter-menu ()
   "Transient menu for Org-Roam Folgezettel filters."
