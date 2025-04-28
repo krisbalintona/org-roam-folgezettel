@@ -607,7 +607,9 @@ If called interactively, NODE is the org-roam node at point."
                org-mode org-roam-folgezettel-mode)
   (let* ((node-formatted (org-roam-node-formatted node))
          (buf (org-roam-folgezettel-list
-               (org-roam-folgezettel--buffer-name-concat node-formatted))))
+               (org-roam-folgezettel--buffer-name-concat node-formatted)
+               nil                      ; Maybe be the box this node belongs to?
+               '(display-buffer-same-window))))
     (display-buffer buf '(display-buffer-same-window))
     (with-current-buffer buf
       (if (let* ((objects (vtable-objects (vtable-current-table)))
