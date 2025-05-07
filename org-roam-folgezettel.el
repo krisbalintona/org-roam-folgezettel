@@ -517,6 +517,10 @@ See the bindings in `org-roam-folgezettel-table-map' below:
           (setq-local buffer-read-only t
                       truncate-lines t)
           (setq table (make-vtable
+                       :use-header-line t
+                       :objects-function #'org-roam-folgezettel-list--objects
+                       :getter #'org-roam-folgezettel-list--getter
+                       :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))
                        :columns '(( :name "Index"
                                     :primary ascend
                                     :align left
@@ -534,14 +538,10 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                     :formatter org-roam-folgezettel--tags-formatter
                                     :max-width "25%"
                                     :truncate-guess-tolerance 0))
+                       :separator-width 2
                        :use-navigation-keymap t
                        :keymap org-roam-folgezettel-table-map
-                       :actions org-roam-folgezettel-action-map
-                       :objects-function #'org-roam-folgezettel-list--objects
-                       :getter #'org-roam-folgezettel-list--getter
-                       :separator-width 2
-                       :use-header-line t
-                       :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))))
+                       :actions org-roam-folgezettel-action-map))
           ;; Set local variables for vtable
           (vtable-set-extra-data (vtable-current-table)
                                  (list (cons 'org-roam-folgezettel-filter-query filter-query)
