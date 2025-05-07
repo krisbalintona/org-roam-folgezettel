@@ -260,7 +260,7 @@ if the index string is empty, return nil."
     (when (and (cdr values) (not (string-empty-p (cdr values))))
       (cdr values))))
 
-;;;;; Formatters
+;;;;; Special formatting
 (defun org-roam-folgezettel--index-formatter (index)
   "Propertize index INDEX.
 Meant to be used as the formatter for index numberings."
@@ -308,6 +308,16 @@ path of a node, with the last string representing the title of the node."
   "Propertize a series of TAGS.
 Meant to be used as the formatter for tags."
   (propertize tags 'face 'org-tag))
+
+(defun org-roam-folgezettel--column-color-function (_line-index column-index _value node &optional _computed-color-faces)
+  "Color function for table columns.
+For a description of _LINE-INDEX, COLUMN-INDEX, _VALUE, NODE, and
+_COMPUTED-COLOR-FACES, refer to the vtable manual:
+    (info \"(vtable) Making A Table\")"
+  (when (eq column-index 1)
+    (pcase (org-roam-node-type node)
+      ("collection" '(:inherit diff-refine-changed))
+      ("pointer" '(:inherit diff-refine-added)))))
 
 ;;;;; Org-roam-ql integration
 
@@ -539,6 +549,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                     :max-width "25%"
                                     :truncate-guess-tolerance 0))
                        :separator-width 2
+                       :column-color-function #'org-roam-folgezettel--column-color-function
                        :use-navigation-keymap t
                        :keymap org-roam-folgezettel-table-map
                        :actions org-roam-folgezettel-action-map))
