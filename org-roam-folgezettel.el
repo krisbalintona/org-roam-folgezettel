@@ -534,6 +534,7 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                     :formatter org-roam-folgezettel--tags-formatter
                                     :max-width "30%"
                                     :truncate-guess-tolerance 0))
+                       :use-navigation-keymap t
                        :keymap org-roam-folgezettel-table-map
                        :actions org-roam-folgezettel-action-map
                        :objects-function #'org-roam-folgezettel-list--objects
@@ -1146,18 +1147,12 @@ Internally, calls `vtable-remove-object' on the vtable at point."
 ;;; Major mode, keymaps, and transient menus
 (defvar-keymap org-roam-folgezettel-mode-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
-  "p" #'previous-line
-  "n" #'next-line
   "SPC" #'scroll-up-command
   "DEL" #'scroll-down-command
-  "q" #'quit-window
   "x" #'kill-current-buffer)
 
 (defvar-keymap org-roam-folgezettel-table-map
   :doc "Keymap for vtables in `org-roam-folgezettel-mode'."
-  "p" #'vtable-prev-line
-  "n" #'vtable-next-line
-  "g" #'vtable-revert-command
   "T" #'org-roam-folgezettel-toggle-mark-all
   "e" #'org-roam-folgezettel-marked-eval
   "s" #'org-roam-folgezettel-goto-node
