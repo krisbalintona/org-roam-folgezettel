@@ -521,21 +521,21 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                        :objects-function #'org-roam-folgezettel-list--objects
                        :getter #'org-roam-folgezettel-list--getter
                        :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))
-                       :columns '(( :name "Index"
+                       :columns `(( :name "Index"
                                     :primary ascend
                                     :align left
-                                    :formatter org-roam-folgezettel--index-formatter
-                                    :comparator org-roam-folgezettel--index-lessp
+                                    :formatter ,#'org-roam-folgezettel--index-formatter
+                                    :comparator ,#'org-roam-folgezettel--index-lessp
                                     :max-width "10%"
                                     :truncate-guess-tolerance 0)
                                   ( :name "Path"
                                     :align left
                                     :max-width "65%"
-                                    :formatter org-roam-folgezettel--path-formatter
+                                    :formatter ,#'org-roam-folgezettel--path-formatter
                                     :truncate-guess-tolerance 0)
                                   ( :name "Tags"
                                     :align right
-                                    :formatter org-roam-folgezettel--tags-formatter
+                                    :formatter ,#'org-roam-folgezettel--tags-formatter
                                     :max-width "25%"
                                     :truncate-guess-tolerance 0))
                        :separator-width 2
