@@ -526,13 +526,13 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                     :truncate-guess-tolerance 0)
                                   ( :name "Path"
                                     :align left
-                                    :max-width "75%"
+                                    :max-width "65%"
                                     :formatter org-roam-folgezettel--path-formatter
                                     :truncate-guess-tolerance 0)
                                   ( :name "Tags"
                                     :align right
                                     :formatter org-roam-folgezettel--tags-formatter
-                                    :max-width "30%"
+                                    :max-width "25%"
                                     :truncate-guess-tolerance 0))
                        :use-navigation-keymap t
                        :keymap org-roam-folgezettel-table-map
