@@ -58,6 +58,40 @@ like `org-roam-ql-search'accepts."
   "The default name for `org-roam-folgezettel-mode' buffers."
   :type 'string)
 
+(defcustom org-roam-folgezettel-make-table-parameters
+  (list :objects-function #'org-roam-folgezettel-list--objects
+        :getter #'org-roam-folgezettel-list--getter
+        :object-equal #'org-roam-folgezettel-list--object-equal
+        :columns `(( :name "Index"
+                     :primary ascend
+                     :align left
+                     :formatter ,#'org-roam-folgezettel--index-formatter
+                     :comparator ,#'org-roam-folgezettel--index-lessp
+                     :truncate-guess-tolerance 0)
+                   ( :name "Path"
+                     :align left
+                     :max-width "65%"
+                     :formatter ,#'org-roam-folgezettel--path-formatter
+                     :truncate-guess-tolerance 0)
+                   ( :name "Tags"
+                     :align right
+                     :formatter ,#'org-roam-folgezettel--tags-formatter
+                     :max-width "25%"
+                     :truncate-guess-tolerance 0))
+        :use-header-line t
+        :separator-width 2
+        :column-color-function #'org-roam-folgezettel--column-color-function
+        :use-navigation-keymap t
+        :keymap org-roam-folgezettel-table-map
+        :actions org-roam-folgezettel-action-map)
+  "A list of parameters passed to `make-vtable' to create a node listing.
+This option is useful for users who want to customize the parameters
+used to created the vtable.  See the vtable manual for the parameters
+`make-vtable' accepts:
+
+    (info \"(vtable) Making A Table\")"
+  :type 'function)
+
 ;;;; Faces
 
 ;;;; History
@@ -442,6 +476,13 @@ contains the cached information for that node."
             (org-roam-node-list)
           (message "Query yields no results! Showing all nodes instead.")))))
 
+(defun org-roam-folgezettel-list--object-equal (node1 node2)
+  "Predicate for equality between NODE1 and NODE2.
+Used for the :object-equal slot in the vtable.  We only compare the IDs
+of NODE1 and NODE2 for robustness against changes to node data (e.g.,
+tags) made after a table is created."
+  (equal (org-roam-node-id node1) (org-roam-node-id node2)))
+
 (defun org-roam-folgezettel-list--getter (node column vtable)
   "Getter for vtable objects.
 NODE is an org-roam node.  COLUMN is the index of the column the
@@ -508,39 +549,12 @@ See the bindings in `org-roam-folgezettel-table-map' below:
     ;; a buffer then create the vtable.
     (with-selected-window (select-window (display-buffer buf display-buffer-action))
       (let ((inhibit-read-only t)
-            table)
+            (table (apply #'make-vtable (append org-roam-folgezettel-make-table-parameters '(:insert nil)))))
         ;; Only insert vtable and set buffer-local values if the buffer doesn't
         ;; already have one
         (unless (save-excursion (goto-char (point-min)) (vtable-current-table))
           (org-roam-folgezettel-mode)
-          (setq-local buffer-read-only t
-                      truncate-lines t)
-          (setq table (make-vtable
-                       :use-header-line t
-                       :objects-function #'org-roam-folgezettel-list--objects
-                       :getter #'org-roam-folgezettel-list--getter
-                       :object-equal (lambda (node1 node2) (equal (org-roam-node-id node1) (org-roam-node-id node2)))
-                       :columns `(( :name "Index"
-                                    :primary ascend
-                                    :align left
-                                    :formatter ,#'org-roam-folgezettel--index-formatter
-                                    :comparator ,#'org-roam-folgezettel--index-lessp
-                                    :truncate-guess-tolerance 0)
-                                  ( :name "Path"
-                                    :align left
-                                    :max-width "65%"
-                                    :formatter ,#'org-roam-folgezettel--path-formatter
-                                    :truncate-guess-tolerance 0)
-                                  ( :name "Tags"
-                                    :align right
-                                    :formatter ,#'org-roam-folgezettel--tags-formatter
-                                    :max-width "25%"
-                                    :truncate-guess-tolerance 0))
-                       :separator-width 2
-                       :column-color-function #'org-roam-folgezettel--column-color-function
-                       :use-navigation-keymap t
-                       :keymap org-roam-folgezettel-table-map
-                       :actions org-roam-folgezettel-action-map))
+          (vtable-insert table)
           ;; Set local variables for vtable
           (vtable-set-extra-data (vtable-current-table)
                                  (list (cons 'filter-query filter-query)
@@ -549,7 +563,9 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                        (cons 'filter-query-mode-line-indicator
                                              `(lambda ()
                                                 (prin1-to-string
-                                                 (org-roam-folgezettel--table-get-data filter-query ,table)))))))))
+                                                 (org-roam-folgezettel--table-get-data filter-query ,table))))))
+          (setq-local buffer-read-only t
+                      truncate-lines t))))
     buf))
 
 ;;;; Showing nodes
