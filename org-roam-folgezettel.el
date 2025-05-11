@@ -67,17 +67,17 @@ like `org-roam-ql-search'accepts."
                      :align left
                      :formatter ,#'org-roam-folgezettel--index-formatter
                      :comparator ,#'org-roam-folgezettel--index-lessp
-                     :truncate-guess-tolerance 0)
+                     :truncate-guess-tolerance 10)
                    ( :name "Path"
                      :align left
                      :max-width "65%"
                      :formatter ,#'org-roam-folgezettel--path-formatter
-                     :truncate-guess-tolerance 0)
+                     :truncate-guess-tolerance 10)
                    ( :name "Tags"
                      :align right
                      :formatter ,#'org-roam-folgezettel--tags-formatter
                      :max-width "25%"
-                     :truncate-guess-tolerance 0))
+                     :truncate-guess-tolerance 10))
         :use-header-line t
         :separator-width 2
         :column-color-function #'org-roam-folgezettel--column-color-function
