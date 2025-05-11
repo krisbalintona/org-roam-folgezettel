@@ -80,17 +80,6 @@ like `org-roam-ql-search'accepts."
   "History for the `org-roam-folgezettel-edit-index' command.")
 
 ;;;; Internal
-(defvar org-roam-folgezettel-filter-indicator ""
-  "Mode line indicator for current filter.
-Inspired by tablist.el's filter indicator.  Is added to
-`mode-line-misc-info'.")
-
-(defvar-local org-roam-folgezettel-filter-query-history nil
-  "History of `org-roam-folgezettel-filter-query' values.")
-
-(defvar-local org-roam-folgezettel-filter-query-history-place nil
-  "Current place in `org-roam-folgezettel-filter-query-history'.
-Is zero-indexed.")
 
 ;;; Functions and macros
 
