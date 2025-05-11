@@ -107,7 +107,7 @@ used properties by calling the following on an existing vtable created
 by `org-roam-folgezettel--table-set-data':
 
     (vtable-extra-data (vtable-current-vtable))"
-  :type 'function)
+  :type '(plist :key-type symbol :value-type sexp))
 
 ;;;; Faces
 
