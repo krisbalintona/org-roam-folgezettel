@@ -360,6 +360,8 @@ For a description of _LINE-INDEX, COLUMN-INDEX, _VALUE, NODE, and
 _COMPUTED-COLOR-FACES, refer to the vtable manual:
     (info \"(vtable) Making A Table\")"
   (when (eq column-index 1)
+    ;; TODO 2025-05-11: Return to what should be fontified after I've
+    ;; standardized the UX
     (pcase (org-roam-node-type node)
       ("collection" '(:inherit diff-refine-changed))
       ("pointer" '(:inherit diff-refine-added)))))
