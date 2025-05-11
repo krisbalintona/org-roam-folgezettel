@@ -58,6 +58,9 @@ like `org-roam-ql-search'accepts."
   "The default name for `org-roam-folgezettel-mode' buffers."
   :type 'string)
 
+;; TODO 2025-05-11: Note in the docstring what properties are used internally by
+;; `org-roam-folgezettel'?  Or perhaps place them under a namespace and mention
+;; that namespace.
 (defcustom org-roam-folgezettel-make-table-parameters
   (list :objects-function #'org-roam-folgezettel-list--objects
         :getter #'org-roam-folgezettel-list--getter
@@ -89,7 +92,19 @@ This option is useful for users who want to customize the parameters
 used to created the vtable.  See the vtable manual for the parameters
 `make-vtable' accepts:
 
-    (info \"(vtable) Making A Table\")"
+    (info \"(vtable) Making A Table\")
+
+The parameters set here will be the default values used for every vtable
+created by `org-roam-folgezettel'.
+
+However, some parameters may be overridden by `org-roam-folgezettel'
+under various conditions.  For instance, the :insert parameter will
+always be set to nil, even if it is set to non-nil here.  Additionally,
+users may use the :extra-data slot for their own purposes, but (1) it
+should be a plist and (2) several properties in this plist are used
+internally by `org-roam-folgezettel' and should not be used to prevent
+undefined behavior.  (See also `org-roam-folgezettel--table-get-data'
+and `org-roam-folgezettel--table-set-data'.)"
   :type 'function)
 
 ;;;; Faces
@@ -556,14 +571,16 @@ See the bindings in `org-roam-folgezettel-table-map' below:
           (org-roam-folgezettel-mode)
           (vtable-insert table)
           ;; Set local variables for vtable
-          (vtable-set-extra-data (vtable-current-table)
-                                 (list (cons 'filter-query filter-query)
-                                       (cons 'filter-query-history (list filter-query))
-                                       (cons 'filter-query-history-index 0)
-                                       (cons 'filter-query-mode-line-indicator
-                                             `(lambda ()
-                                                (prin1-to-string
-                                                 (org-roam-folgezettel--table-get-data filter-query ,table))))))
+          (vtable-set-extra-data
+           table
+           (append (vtable-extra-data table)
+                   (list (cons 'filter-query filter-query)
+                         (cons 'filter-query-history (list filter-query))
+                         (cons 'filter-query-history-index 0)
+                         (cons 'filter-query-mode-line-indicator
+                               `(lambda ()
+                                  (prin1-to-string
+                                   (org-roam-folgezettel--table-get-data filter-query ,table)))))))
           (setq-local buffer-read-only t
                       truncate-lines t))))
     buf))
