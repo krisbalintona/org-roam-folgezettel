@@ -536,7 +536,6 @@ See the bindings in `org-roam-folgezettel-table-map' below:
                                     :align left
                                     :formatter ,#'org-roam-folgezettel--index-formatter
                                     :comparator ,#'org-roam-folgezettel--index-lessp
-                                    :max-width "10%"
                                     :truncate-guess-tolerance 0)
                                   ( :name "Path"
                                     :align left
