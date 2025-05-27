@@ -81,9 +81,7 @@ like `org-roam-ql-search'accepts."
         :use-header-line t
         :separator-width 2
         :column-color-function #'org-roam-folgezettel--column-color-function
-        :use-navigation-keymap t
-        :keymap org-roam-folgezettel-table-map
-        :actions org-roam-folgezettel-action-map)
+        :use-navigation-keymap t)
   "A list of parameters passed to `make-vtable' to create a node listing.
 This option is useful for users who want to customize the parameters
 used to created the vtable.  See the vtable manual for the parameters
@@ -95,8 +93,11 @@ The parameters set here will be the default values used for every vtable
 created by `org-roam-folgezettel'.
 
 However, some parameters may be overridden by `org-roam-folgezettel'
-under various conditions.  For instance, the :insert parameter will
-always be set to nil, even if it is set to non-nil here.
+under various conditions.  Notably, the :insert parameter will always be
+set to nil, even if it is set to non-nil here, and :keymap and :actions
+will always be set to `org-roam-folgezettel-table-map' and
+`org-roam-folgezettel-action-map'.
+(Though users can customize those separately.)
 
 Users may use the :extra-data slot for their own purposes, but (1) it
 should be a plist and (2) several properties in this plist are used
@@ -576,7 +577,10 @@ See the bindings in `org-roam-folgezettel-table-map' below:
       ;; buffer doesn't already have a table
       (unless (save-restriction (save-excursion (widen) (goto-char (point-min)) (vtable-current-table)))
         (let ((inhibit-read-only t)
-              (table (apply #'make-vtable (append org-roam-folgezettel-make-table-parameters '(:insert nil)))))
+              (table (apply #'make-vtable (append org-roam-folgezettel-make-table-parameters
+                                                  `( :insert nil
+                                                     :keymap ,org-roam-folgezettel-table-map
+                                                     :actions ,org-roam-folgezettel-action-map)))))
           (org-roam-folgezettel-mode)
           (vtable-insert table)
           ;; Set table local variables for vtable
@@ -1211,6 +1215,8 @@ Internally, calls `vtable-remove-object' on the vtable at point."
   "/ i c" #'org-roam-folgezettel-filter-children
   "/ i d" #'org-roam-folgezettel-filter-descendants)
 
+;; FIXME 2025-05-27: As far as I can tell, the :action-map must accept
+;; a list... not sure how we can get around that.
 (defcustom org-roam-folgezettel-action-map
   '("RET" org-roam-folgezettel-open-node
     "C-o" org-roam-folgezettel-display-node
