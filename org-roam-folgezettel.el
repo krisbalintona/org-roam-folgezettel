@@ -44,7 +44,6 @@
   "A symbol representing a filter for the buffer.
 This symbol is of the form of SOURCE-OR-QUERY that org-roam-ql commands
 like `org-roam-ql-search'accepts."
-  :local t
   :safe t
   :type '(restricted-sexp :match-alternatives (listp)))
 
