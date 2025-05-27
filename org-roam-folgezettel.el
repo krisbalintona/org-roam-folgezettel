@@ -707,7 +707,7 @@ When ACCEPT-INDIRECT-BUFFER is non-nil, pass \\='accept to the
 INDIRECT-BUFFER-P parameter of `org-roam-folgezettel-open-node'.  When
 called interactively, this is the universal argument."
   (interactive (list (read--expression "Eval in marked nodes: ") current-prefix-arg))
-  (if-let ((nodes (vtable-marked-objects (vtable-current-table))))
+  (if-let* ((nodes (vtable-marked-objects (vtable-current-table))))
       (let (result)
         ;; Save window state to restore it after all FORMs are evaluated, just
         ;; in case FORM alters the window state
