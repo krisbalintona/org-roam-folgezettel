@@ -58,8 +58,7 @@ like `org-roam-ql-search'accepts."
   :type 'string)
 
 (defcustom org-roam-folgezettel-make-table-parameters
-  (list :objects-function #'org-roam-folgezettel-list--objects
-        :getter #'org-roam-folgezettel-list--getter
+  (list :getter #'org-roam-folgezettel-list--getter
         :object-equal #'org-roam-folgezettel-list--object-equal
         :columns `(( :name "Index"
                      :primary ascend
@@ -93,10 +92,11 @@ created by `org-roam-folgezettel'.
 
 However, some parameters may be overridden by `org-roam-folgezettel'
 under various conditions.  Notably, the :insert parameter will always be
-set to nil, even if it is set to non-nil here, and :keymap and :actions
-will always be set to `org-roam-folgezettel-table-map' and
-`org-roam-folgezettel-action-map'.
-(Though users can customize those separately.)
+set to nil, even if it is set to non-nil here, :keymap and :actions will
+always be set to `org-roam-folgezettel-table-map' and
+`org-roam-folgezettel-action-map' respectively
+(though users can customize those separately), and finally
+:objects-function.
 
 Users may use the :extra-data slot for their own purposes, but (1) it
 should be a plist and (2) several properties in this plist are used
@@ -131,6 +131,13 @@ by `org-roam-folgezettel--table-set-data':
   "History for the `org-roam-folgezettel-edit-index' command.")
 
 ;;;; Internal
+(defvar org-roam-folgezettel--filter-query-temp nil
+  "Temporary storage for node listing queries.
+This variable is used so that that `org-roam-folgezettel-list--objects’,
+a unary function, is informed of any filter query it should use.
+
+This variable should only be bound to non-nil via `let’., otherwise
+`org-roam-folgezettel-list--objects’ will always use this filter query.")
 
 ;;; Functions and macros
 
@@ -183,7 +190,6 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
              (string-pad x 5 32 t))
            (org-roam-folgezettel--index-split index))
    "."))
-
 
 (defun org-roam-folgezettel--index-lessp (index1 index2)
   "Compare INDEX1 and INDEX2 based on Luhmann-style numbering.
@@ -490,9 +496,18 @@ The reason we define this predicate is because org-roam-ql's
 (defun org-roam-folgezettel-list--objects ()
   "Get objects for vtable.
 Returns a list of lists, one for every org-roam node.  Each list
-contains the cached information for that node."
+contains the cached information for that node.
+
+The list of nodes is determined by a filter query passed to
+`org-roam-ql-nodes’.  This filter query has the following precedence:
+1. `org-roam-folgezettel--filter-query-temp’
+2. The :filter-query property in the :extra-data plist of the table at
+   point.
+3. `org-roam-folgezettel-default-filter-query’
+4. All nodes."
   (let ((filter-query
-         (or (when (vtable-current-table) (org-roam-folgezettel--table-get-data :filter-query))
+         (or org-roam-folgezettel--filter-query-temp
+             (when (vtable-current-table) (org-roam-folgezettel--table-get-data :filter-query))
              org-roam-folgezettel-default-filter-query
              (org-roam-node-list))))
     (or (org-roam-ql-nodes filter-query)
@@ -565,8 +580,12 @@ See the bindings in `org-roam-folgezettel-table-map' below:
          ((and buf-name (not (stringp buf-name)))
           (generate-new-buffer-name org-roam-folgezettel-default-buffer-name))
          ((not buf-name) org-roam-folgezettel-default-buffer-name)))
-  (let ((buf (get-buffer-create buf-name))
-        (filter-query (or filter-query org-roam-folgezettel-default-filter-query)))
+  (let* ((buf (get-buffer-create buf-name))
+         (filter-query (or filter-query org-roam-folgezettel-default-filter-query))
+         ;; See the docstring of
+         ;; `org-roam-folgezettel--filter-query-temp’ for why the line
+         ;; below is necessary
+         (org-roam-folgezettel--filter-query-temp filter-query))
     ;; NOTE: Due to a limitation in vtable (see bug#69837), the width of object
     ;; representations can only be properly calculated when the buffer the
     ;; vtable is created on is currently visible.  Therefore, we must switch to
@@ -576,17 +595,24 @@ See the bindings in `org-roam-folgezettel-table-map' below:
       ;; buffer doesn't already have a table
       (unless (save-restriction (save-excursion (widen) (goto-char (point-min)) (vtable-current-table)))
         (let ((inhibit-read-only t)
-              (table (apply #'make-vtable (append org-roam-folgezettel-make-table-parameters
-                                                  `( :insert nil
-                                                     :keymap ,org-roam-folgezettel-table-map
-                                                     :actions ,org-roam-folgezettel-action-map)))))
+              (table (apply #'make-vtable
+                            (append org-roam-folgezettel-make-table-parameters
+                                    `( :insert nil
+                                       :objects-function org-roam-folgezettel-list--objects
+                                       :keymap ,org-roam-folgezettel-table-map
+                                       :actions ,org-roam-folgezettel-action-map
+                                       ;; Set table local variables for vtable
+                                       :extra-data
+                                       ( :filter-query ,filter-query
+                                         :filter-query-history ,(list filter-query)
+                                         :filter-query-history-index 0))))))
           (org-roam-folgezettel-mode)
           (vtable-insert table)
-          ;; Set table local variables for vtable
+          ;; FIXME 2025-06-05: Is there a way to avoid having to call
+          ;; `org-roam-folgezettel--table-set-data’ after the table is
+          ;; already created?
+          ;; Set :filter-query-mode-line-indicator.  We need
           (org-roam-folgezettel--table-set-data table
-            :filter-query filter-query
-            :filter-query-history (list filter-query)
-            :filter-query-history-index 0
             :filter-query-mode-line-indicator
             `(lambda () (prin1-to-string (org-roam-folgezettel--table-get-data :filter-query ,table))))
           (setq-local buffer-read-only t
