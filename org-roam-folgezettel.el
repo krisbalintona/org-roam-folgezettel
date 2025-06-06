@@ -545,6 +545,40 @@ names:
           'face 'org-tag)
          ""))))
 
+(defun org-roam-folgezettel-insert-table (&optional filter-query)
+  "Insert a node listing at point.
+FILTER-QUERY is a node query passed to `org-roam-ql-nodes’.  If it is
+nil, use the value of `org-roam-folgezettel-default-filter-query'.  If
+that option is nil, list all nodes."
+  ;; See the docstring of `org-roam-folgezettel--filter-query-temp’
+  ;; for why setting `org-roam-folgezettel--filter-query-temp’ is
+  ;; necessary
+  (let ((org-roam-folgezettel--filter-query-temp
+         (or filter-query org-roam-folgezettel-default-filter-query)))
+    (let ((inhibit-read-only t)
+          (table (apply #'make-vtable
+                        (append org-roam-folgezettel-make-table-parameters
+                                `( :insert nil
+                                   :objects-function org-roam-folgezettel-list--objects
+                                   :keymap ,org-roam-folgezettel-table-map
+                                   :actions ,org-roam-folgezettel-action-map
+                                   ;; Set table local variables for vtable
+                                   :extra-data
+                                   ( :filter-query ,filter-query
+                                     :filter-query-history ,(list filter-query)
+                                     :filter-query-history-index 0))))))
+      (org-roam-folgezettel-mode)
+      (vtable-insert table)
+      ;; FIXME 2025-06-05: Is there a way to avoid having to call
+      ;; `org-roam-folgezettel--table-set-data’ after the table is
+      ;; already created?
+      ;; Set :filter-query-mode-line-indicator.  We need to call this
+      ;; after the table is made so we can evaluate table inside of
+      ;; the lambda
+      (org-roam-folgezettel--table-set-data table
+        :filter-query-mode-line-indicator
+        `(lambda () (prin1-to-string (org-roam-folgezettel--table-get-data :filter-query ,table)))))))
+
 ;;; Commands
 ;;;###autoload
 (defun org-roam-folgezettel-list (&optional buf-name filter-query display-buffer-action)
@@ -580,44 +614,21 @@ See the bindings in `org-roam-folgezettel-table-map' below:
          ((and buf-name (not (stringp buf-name)))
           (generate-new-buffer-name org-roam-folgezettel-default-buffer-name))
          ((not buf-name) org-roam-folgezettel-default-buffer-name)))
-  (let* ((buf (get-buffer-create buf-name))
-         (filter-query (or filter-query org-roam-folgezettel-default-filter-query))
-         ;; See the docstring of
-         ;; `org-roam-folgezettel--filter-query-temp’ for why the line
-         ;; below is necessary
-         (org-roam-folgezettel--filter-query-temp filter-query))
-    ;; NOTE: Due to a limitation in vtable (see bug#69837), the width of object
-    ;; representations can only be properly calculated when the buffer the
-    ;; vtable is created on is currently visible.  Therefore, we must switch to
-    ;; a buffer then create the vtable.
+  ;; NOTE: Due to a limitation in vtable (see bug#69837), the width of
+  ;; object representations can only be properly calculated when the
+  ;; buffer the vtable is created on is currently visible.  Therefore,
+  ;; we must switch to a buffer then create the vtable.
+  (let ((buf (get-buffer-create buf-name)))
     (with-selected-window (select-window (display-buffer buf display-buffer-action))
-      ;; Only insert vtable and set buffer-local and table local values if the
-      ;; buffer doesn't already have a table
-      (unless (save-restriction (save-excursion (widen) (goto-char (point-min)) (vtable-current-table)))
-        (let ((inhibit-read-only t)
-              (table (apply #'make-vtable
-                            (append org-roam-folgezettel-make-table-parameters
-                                    `( :insert nil
-                                       :objects-function org-roam-folgezettel-list--objects
-                                       :keymap ,org-roam-folgezettel-table-map
-                                       :actions ,org-roam-folgezettel-action-map
-                                       ;; Set table local variables for vtable
-                                       :extra-data
-                                       ( :filter-query ,filter-query
-                                         :filter-query-history ,(list filter-query)
-                                         :filter-query-history-index 0))))))
-          (org-roam-folgezettel-mode)
-          (vtable-insert table)
-          ;; FIXME 2025-06-05: Is there a way to avoid having to call
-          ;; `org-roam-folgezettel--table-set-data’ after the table is
-          ;; already created?
-          ;; Set :filter-query-mode-line-indicator.  We need
-          (org-roam-folgezettel--table-set-data table
-            :filter-query-mode-line-indicator
-            `(lambda () (prin1-to-string (org-roam-folgezettel--table-get-data :filter-query ,table))))
-          (setq-local buffer-read-only t
-                      truncate-lines t))))
-    buf))
+      ;; Only insert vtable and set buffer-local and table local
+      ;; values if the buffer doesn't already have a table
+      (unless (save-restriction (save-excursion (widen)
+                                                (goto-char (point-min))
+                                                (vtable-current-table)))
+        (org-roam-folgezettel-insert-table filter-query))
+      (setq-local buffer-read-only t
+                  truncate-lines t)
+      buf)))
 
 ;;;; Showing nodes
 (defun org-roam-folgezettel-open-node (node &optional display-buffer-action no-select indirect-buffer-p)
