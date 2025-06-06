@@ -251,22 +251,22 @@ ARGS should have the form (VAR VAL VAR VAL ...).  For example:
      (vtable-set-extra-data ,table extra-data)))
 
 ;;;; Filter queries
-(defun org-roam-folgezettel-filter--modify (query new-buffer)
+(defun org-roam-folgezettel-filter--modify (filter-query new-buffer)
   "Modify the filter for the current buffer and update listing.
-If QUERY is non-nil, use that string as the new query.
+If FILTER-QUERY is non-nil, use that string as the new query.
 
 If NEW-BUFFER is non-nil, pass that argument to
 `org-roam-folgezettel-list'.  For a description of the behavior of
 NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
   (if new-buffer
-      (org-roam-folgezettel-list new-buffer query)
-    (org-roam-folgezettel--table-set-data (vtable-current-table)
-      :filter-query query
-      :filter-query-history (append
-                             (list query)
-                             (nthcdr (org-roam-folgezettel--table-get-data :filter-query-history-index)
-                                     (org-roam-folgezettel--table-get-data :filter-query-history)))
-      :filter-query-history-index 0)
+      (org-roam-folgezettel-list new-buffer filter-query)
+    (let ((table (vtable-current-table)))
+      (org-roam-folgezettel--table-set-data table
+        :filter-query filter-query
+        :filter-query-history
+        (cons filter-query (nthcdr (org-roam-folgezettel--table-get-data :filter-query-history-index table)
+                                   (org-roam-folgezettel--table-get-data :filter-query-history table)))
+        :filter-query-history-index 0))
     (vtable-revert-command)))
 
 ;;;; Buffer names
@@ -753,13 +753,13 @@ called interactively, this is the universal argument."
   "Apply previous filter query.
 Queries are preserved in the table's local data."
   (interactive)
-  (let ((previous-place
-         (1+ (org-roam-folgezettel--table-get-data :filter-query-history-index)))
-        (history (org-roam-folgezettel--table-get-data :filter-query-history)))
+  (let* ((table (vtable-current-table))
+         (previous-place (1+ (org-roam-folgezettel--table-get-data :filter-query-history-index table)))
+         (history (org-roam-folgezettel--table-get-data :filter-query-history table)))
     (if (< (1- (length history))
            previous-place)
         (message "No previous query in filter history")
-      (org-roam-folgezettel--table-set-data (vtable-current-table)
+      (org-roam-folgezettel--table-set-data table
         :filter-query (nth previous-place history)
         :filter-query-history-index previous-place)
       (message "Going back in filter history")
@@ -769,12 +769,12 @@ Queries are preserved in the table's local data."
   "Apply next filter query.
 Queries are preserved in the table's local data."
   (interactive)
-  (let ((next-place
-         (1- (org-roam-folgezettel--table-get-data :filter-query-history-index)))
-        (history (org-roam-folgezettel--table-get-data :filter-query-history)))
+  (let* ((table (vtable-current-table))
+         (next-place (1- (org-roam-folgezettel--table-get-data :filter-query-history-index table)))
+        (history (org-roam-folgezettel--table-get-data :filter-query-history table)))
     (if (> 0 next-place)
         (message "No next query in filter history")
-      (org-roam-folgezettel--table-set-data (vtable-current-table)
+      (org-roam-folgezettel--table-set-data table
         :filter-query (nth next-place history)
         :filter-query-history-index next-place)
       (message "Going forward in filter history")
