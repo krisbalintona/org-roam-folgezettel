@@ -351,9 +351,8 @@ path of a node, with the last string representing the title of the node."
          (propertized-olp
           (string-join (mapcar (lambda (s) (propertize s 'face path-face)) olp)
                        (propertize separator 'face 'shadow)))
-         (title (car (last path)))
-         (propertized-title (propertize title 'face '(:height 1.0 :inherit variable-pitch))))
-    (concat propertized-title
+         (title (car (last path))))
+    (concat title
             (unless (string-empty-p propertized-olp)
               (concat
                (propertize " (" 'face 'shadow)
