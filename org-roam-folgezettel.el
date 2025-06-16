@@ -74,9 +74,11 @@ like `org-roam-ql-search'accepts."
                      :formatter ,#'org-roam-folgezettel--tags-formatter
                      :max-width "25%"))
         :use-header-line t
+        :decor-intangible t
         :separator-width 2
         :column-color-function #'org-roam-folgezettel--column-color-function
-        :use-navigation-keymap t)
+        :use-navigation-keymap t
+        :pulse '(update insert remove))
   "A list of parameters passed to `make-vtable' to create a node listing.
 This option is useful for users who want to customize the parameters
 used to created the vtable.  See the vtable manual for the parameters
