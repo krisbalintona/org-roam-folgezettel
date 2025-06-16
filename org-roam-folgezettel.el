@@ -266,6 +266,13 @@ NEW-BUFFER, see the docstring of `org-roam-folgezettel-list'."
         :filter-query-history-index 0))
     (vtable-revert-command)))
 
+(defun org-roam-folgezettel-filter-print (&optional table)
+  "Print the filter query of the table at point.
+TABLE should be a vtable object.  If it is provided, print the filter
+query of TABLE instead."
+  (prin1-to-string (org-roam-folgezettel--table-get-data
+                    :filter-query (or table (vtable-current-table)))))
+
 ;;;; Buffer names
 (defun org-roam-folgezettel--buffer-name-concat (query)
   "Returns buffer name according to QUERY.
@@ -550,8 +557,8 @@ that option is nil, list all nodes."
   ;; See the docstring of `org-roam-folgezettel--filter-query-temp’
   ;; for why setting `org-roam-folgezettel--filter-query-temp’ is
   ;; necessary
-  (let ((org-roam-folgezettel--filter-query-temp
-         (or filter-query org-roam-folgezettel-default-filter-query)))
+  (let* ((filter-query (or filter-query org-roam-folgezettel-default-filter-query))
+         (org-roam-folgezettel--filter-query-temp filter-query))
     (let ((inhibit-read-only t)
           (table (apply #'make-vtable
                         (append org-roam-folgezettel-make-table-parameters
@@ -559,22 +566,12 @@ that option is nil, list all nodes."
                                    :objects-function org-roam-folgezettel-list--objects
                                    :keymap ,org-roam-folgezettel-table-map
                                    :actions ,org-roam-folgezettel-action-map
-                                   ;; Set table local variables for vtable
                                    :extra-data
                                    ( :filter-query ,filter-query
                                      :filter-query-history ,(list filter-query)
                                      :filter-query-history-index 0))))))
       (org-roam-folgezettel-mode)
-      (vtable-insert table)
-      ;; FIXME 2025-06-05: Is there a way to avoid having to call
-      ;; `org-roam-folgezettel--table-set-data’ after the table is
-      ;; already created?
-      ;; Set :filter-query-mode-line-indicator.  We need to call this
-      ;; after the table is made so we can evaluate table inside of
-      ;; the lambda
-      (org-roam-folgezettel--table-set-data table
-        :filter-query-mode-line-indicator
-        `(lambda () (prin1-to-string (org-roam-folgezettel--table-get-data :filter-query ,table)))))))
+      (vtable-insert table))))
 
 ;;; Commands
 ;;;###autoload
@@ -800,7 +797,7 @@ Other filtering commands are available in
 `org-roam-folgezettel-table-map':
 \\{org-roam-folgezettel-mode-map}"
   (interactive (list (read-string "New filter query: "
-                                  (funcall (org-roam-folgezettel--table-get-data :filter-query-mode-line-indicator))
+                                  (org-roam-folgezettel-filter-print)
                                   'org-roam-folgezettel-filter-query-edit-history)
                      current-prefix-arg)
                org-roam-folgezettel-mode)
@@ -1287,8 +1284,8 @@ Evaluate the following for more information on vtable action maps:
          '(:eval
            (save-excursion
              (goto-char (point-min))
-             (when-let ((indicator-func (org-roam-folgezettel--table-get-data :filter-query-mode-line-indicator)))
-               (format " [Query:%s]" (string-remove-suffix "," (string-trim (funcall indicator-func)))))))))))
+             (when-let ((table (vtable-current-table)))
+               (format " [Query:%s]" (string-remove-suffix "," (org-roam-folgezettel-filter-print table))))))))))
 
 (transient-define-prefix org-roam-folgezettel-filter-menu ()
   "Transient menu for Org-Roam Folgezettel filters."
